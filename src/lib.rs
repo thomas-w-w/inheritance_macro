@@ -1,64 +1,57 @@
 ////use chrono::prelude::*;
 ////use darling::{FromMeta, ToTokens};
-// use proc_macro::TokenStream;
-// use quote::quote;
+use proc_macro::TokenStream;
+use quote::quote;
 ////use syn::{self, parse_macro_input, parse_quote, AttributeArgs, FnArg, Ident, ItemFn, Pat, Stmt};
+///
 
-#[macro_export]
-macro_rules! make_foo
-{
-    (
-        $foobar: ident,
-        $i_foobar: ident,
-        (
-            $(
-                (
-                    $element: ident: $ty: ty,
-                    $getter: ident: $setter: ident
-                )
-            ),*)
-    )
-    =>
-    {
-        struct $foobar
-        {
-            id: u64,
-            $($element: $ty),*
-        }
+#[proc_macro_derive(Log)]
+pub fn log_derive(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let name = &ast.ident;
 
-        trait $i_foobar
-        {
-            $(
-                fn $getter(&self) -> $ty;
-                fn $setter(&mut self, $element: $ty);
-            )*
+    let trait_impl = quote! {
+        impl Log for #name {
+            fn info(&self, msg: &str) {
+                println!("[Info] {}: {}", stringify!(#name), msg);
+            }
+            fn warn(&self, msg: &str) {
+                println!("[Warn] {}: {}", stringify!(#name), msg);
+            }
+            fn error(&self, msg: &str) {
+                println!("[Err] {}: {}", stringify!(#name), msg);
+            }
         }
+    };
 
-        impl $i_foobar for $foobar
-        {
-            $(
-                fn $getter(&self) -> $ty{
-                    self.$element
-                }
-                fn $setter(&mut self, $element: $ty) {
-                    self.$element = $element;
-                }
-            )*
-        }
-    }
+    trait_impl.into()
 }
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+//
+#[proc_macro_derive(Yakito)]
+pub fn yakito_derive(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let name = &ast.ident;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+    let trait_impl = quote! {
+        pub trait #name {
+            fn get_id(&self) -> u64;
+            fn get_object_type(&self) -> ObjectType;
+        }
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+
+        impl #name for #name {
+            fn info(&self, msg: &str) {
+                println!("[Info] {}: {}", stringify!(#name), msg);
+            }
+            fn warn(&self, msg: &str) {
+                println!("[Warn] {}: {}", stringify!(#name), msg);
+            }
+            fn error(&self, msg: &str) {
+                println!("[Err] {}: {}", stringify!(#name), msg);
+            }
+        }
+    };
+
+    trait_impl.into()
 }

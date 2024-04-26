@@ -1,5 +1,9 @@
 use inheritance_macro::*;
 
+mod foons;
+
+use foons::*;
+
 trait IFoo {
     fn foo_num(&mut self) -> &mut i32;
     fn foo_str(&mut self) -> &mut String;
@@ -106,19 +110,6 @@ impl IPii for Pii {
     }
 }
 
-// fn random_empty_tile(arr: &mut [Tile]) -> &mut Tile {
-//     let len = arr.len();
-//     let mut the_chosen_i = 0;
-//     loop {
-//         let i = rand::thread_rng().gen_range(0, len);
-//         let tile = &mut arr[i];
-//         if let Tile::Empty = tile {
-//             the_chosen_i = i;
-//             break;
-//         }
-//     }
-//     &mut arr[the_chosen_i]
-// }
 fn print_foo(
     foo_num: i32,
     foo_str: String,
