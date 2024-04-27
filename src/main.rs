@@ -1,16 +1,23 @@
 use inheritance_macro::*;
 
+use traitcast::{Traitcast, TraitcastFrom};
+
 mod foons;
 
 use foons::*;
 
-trait IFoo {
+trait IObj {
+    fn id(&self) -> u64;
+    fn obj_type(&self) -> ObjectType;
+}
+
+trait IFoo: IObj {
     fn foo_num(&mut self) -> &mut i32;
     fn foo_str(&mut self) -> &mut String;
     fn foo_bln(&mut self) -> &mut bool;
 }
 
-trait IBar {
+trait IBar: IObj {
     fn bar_num(&mut self) -> &mut i32;
     fn bar_str(&mut self) -> &mut String;
     fn bar_bln(&mut self) -> &mut bool;
@@ -21,25 +28,61 @@ trait IPii: IFoo + IBar {
     fn pii_str(&mut self) -> &mut String;
     fn pii_bln(&mut self) -> &mut bool;
 }
+#[derive(Clone, Debug)]
+pub enum ObjectType {
+    Object,
+    Foo,
+    Bar,
+    Pii,
+}
 
+//#[derive(ObjObj)]
+#[derive(Clone, Debug)]
+struct Obj {
+    id: u64,
+    obj_type: ObjectType,
+}
+impl IObj for Obj {
+    fn id(&self) -> u64 {
+        self.id
+    }
+    fn obj_type(&self) -> ObjectType {
+        self.obj_type.to_owned()
+    }
+}
+//#[derive(ObjObj)]
+#[derive(Clone, Debug)]
 struct Foo {
+    obj: Box<Obj>,
     foo_num: i32,
     foo_str: String,
     foo_bln: bool,
 }
 
+#[derive(Clone, Debug)]
 struct Bar {
+    obj: Box<Obj>,
     bar_num: i32,
     bar_str: String,
     bar_bln: bool,
 }
 
+#[derive(Clone, Debug, ObjObj)]
 struct Pii {
     foo: Box<Foo>,
     bar: Box<Bar>,
     pii_num: i32,
     pii_str: String,
     pii_bln: bool,
+}
+impl IObj for Foo {
+    fn id(&self) -> u64 {
+        self.obj.id()
+    }
+
+    fn obj_type(&self) -> ObjectType {
+        self.obj.obj_type()
+    }
 }
 
 impl IFoo for Foo {
@@ -56,6 +99,15 @@ impl IFoo for Foo {
     }
 }
 
+impl IObj for Bar {
+    fn id(&self) -> u64 {
+        self.obj.id()
+    }
+
+    fn obj_type(&self) -> ObjectType {
+        self.obj.obj_type()
+    }
+}
 impl IBar for Bar {
     fn bar_num(&mut self) -> &mut i32 {
         &mut self.bar_num
@@ -67,6 +119,16 @@ impl IBar for Bar {
 
     fn bar_bln(&mut self) -> &mut bool {
         &mut self.bar_bln
+    }
+}
+
+impl IObj for Pii {
+    fn id(&self) -> u64 {
+        self.foo.id()
+    }
+
+    fn obj_type(&self) -> ObjectType {
+        self.foo.obj_type()
     }
 }
 
@@ -140,20 +202,31 @@ fn test_foo() {
     let pii_str: String = "foo i".to_string();
     let pii_bln: bool = false;
 
+    let obj = Obj {
+        id: 1,
+        obj_type: ObjectType::Pii,
+    };
+
+    let foo = Foo {
+        obj: Box::new(obj.clone()),
+        foo_num,
+        foo_str,
+        foo_bln,
+    };
+
+    let bar = Bar {
+        obj: Box::new(obj),
+        bar_num,
+        bar_str,
+        bar_bln,
+    };
+
     let mut pii = Pii {
-        foo: Box::new(Foo {
-            foo_num: foo_num,
-            foo_str: foo_str,
-            foo_bln: foo_bln,
-        }),
-        bar: Box::new(Bar {
-            bar_num: bar_num,
-            bar_str: bar_str,
-            bar_bln: bar_bln,
-        }),
-        pii_num: pii_num,
-        pii_str: pii_str,
-        pii_bln: pii_bln,
+        foo: Box::new(foo),
+        bar: Box::new(bar),
+        pii_num,
+        pii_str,
+        pii_bln,
     };
 
     let foo_num = pii.foo_num().clone();
@@ -214,6 +287,8 @@ fn test_foo() {
     print_foo(
         foo_num, foo_str, foo_bln, bar_num, bar_str, bar_bln, pii_num, pii_str, pii_bln,
     );
+
+    println!("{:?}", pii);
 }
 
 fn test_dragon() {
