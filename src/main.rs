@@ -1,6 +1,7 @@
 mod baseclass;
 mod foo_bar_obj;
 mod foons;
+mod obj_fr_baseclass;
 
 use inheritance_macro::*;
 use traitcast::{Traitcast, TraitcastFrom};
@@ -8,6 +9,7 @@ use traitcast::{Traitcast, TraitcastFrom};
 use baseclass::*;
 use foo_bar_obj::*;
 use foons::*;
+use obj_fr_baseclass::*;
 
 fn test_dragon() {
     // make_foo!(Animal, IAnimal, (given_name: String));
@@ -54,6 +56,7 @@ fn main() {
     test_foo();
     test_dragon();
     baseclass_main();
+    obj_main();
 }
 
 //fn do_work_w_dragon(dragon: Dragon) {}

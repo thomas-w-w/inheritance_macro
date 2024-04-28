@@ -14,3 +14,5 @@ self self: Self a: A Yes The code that calls this method should not be able to r
 mut self mut self: Self mut a: A Yes If you want to change what self points to. Not useful because it takes ownership.
 
 https://jsdw.me/posts/rust-fn-traits/
+
+https://stackoverflow.com/questions/73195638/multiple-inheritance-for-oop-like-rust
