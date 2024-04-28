@@ -1,10 +1,12 @@
 use std::fmt::Display;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ObjType {
     Obj,
     Animal,
     Bird,
+    Lizard,
+    Dragon,
 }
 impl Display for ObjType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -12,6 +14,8 @@ impl Display for ObjType {
             ObjType::Obj => write!(f, "Obj"),
             ObjType::Animal => write!(f, "Animal"),
             ObjType::Bird => write!(f, "Bird"),
+            ObjType::Lizard => write!(f, "Lizard"),
+            ObjType::Dragon => write!(f, "Dragon"),
         }
     }
 }
@@ -69,6 +73,12 @@ impl IAnimal for Bird {
         &self.animal
     }
 }
+trait IBird {
+    fn as_bird(&self) -> &Bird;
+    fn get_given_name(&self) -> &String {
+        &self.as_bird().as_animal().given_name
+    }
+}
 struct Lizard {
     animal: Animal,
 }
@@ -84,8 +94,38 @@ impl IAnimal for Lizard {
         &self.animal
     }
 }
+trait ILizard {
+    fn as_lizard(&self) -> &Lizard;
+    fn get_given_name(&self) -> &String {
+        &self.as_lizard().as_animal().given_name
+    }
+}
 
-//############ NON-DYNAMIC PROGRAMMING #/*
+struct Dragon {
+    bird: Bird,
+    lizard: Lizard,
+}
+impl Dragon {
+    fn new(id: &str, obj_type: ObjType, given_name: String) -> Self {
+        Self {
+            bird: Bird::new(id, obj_type.clone(), given_name.clone()),
+            lizard: Lizard::new(id, obj_type.clone(), given_name.clone()),
+        }
+    }
+    fn get_given_name(&self) -> &String {
+        &self.as_lizard().as_animal().given_name
+    }
+}
+impl IBird for Dragon {
+    fn as_bird(&self) -> &Bird {
+        &self.bird
+    }
+}
+impl ILizard for Dragon {
+    fn as_lizard(&self) -> &Lizard {
+        &self.lizard
+    }
+}
 impl<T> IObj for T
 where
     T: IAnimal,
@@ -94,34 +134,52 @@ where
         &self.as_animal().obj
     }
 }
+impl<T> IAnimal for T
+where
+    T: IBird + ILizard,
+{
+    fn as_animal(&self) -> &Animal {
+        &self.as_bird().animal
+    }
+}
+
 fn print_bird(bird: Bird) {
     println!(
-        "id: {}, obj type: {}, given name: {}",
+        "Bird id: {}, obj type: {}, given name: {}",
         bird.get_id(),
         bird.get_obj_type(),
         bird.get_given_name()
     );
 }
-// */
-//############ DYNAMIC PROGRAMMING #
-/*
-impl<T> IObj for dyn IAnimal<Type = T> {
-    fn as_obj(&self) -> &Obj {
-        &self.as_animal().obj
-    }
-}
-fn print_bird(bird: Bird) {
-    let dyn_bird = &bird as &dyn IAnimal<Type = i32>;
+
+fn print_lizard(lizard: Lizard) {
     println!(
-        "id: {}, obj_type: {}, value: {}",
-        dyn_bird.get_id(),
-        dyn_bird.get_obj_type(),
-        dyn_bird.get_value()
+        "Lizard id: {}, obj type: {}, given name: {}",
+        lizard.get_id(),
+        lizard.get_obj_type(),
+        lizard.get_given_name()
     );
 }
-// */
+
+fn print_dragon(dragon: Dragon) {
+    println!(
+        "Dragon id: {}, obj type: {}, given name: {}",
+        dragon.get_id(),
+        dragon.get_obj_type(),
+        dragon.get_given_name()
+    );
+}
+
 pub fn obj_main() {
     let bird: Bird = Bird::new("bird-1", ObjType::Bird, "Birdie".to_owned());
 
     print_bird(bird);
+
+    let lizard: Lizard = Lizard::new("lizard-1", ObjType::Lizard, "Lizzie".to_owned());
+
+    print_lizard(lizard);
+
+    let dragon: Dragon = Dragon::new("dragon-1", ObjType::Dragon, "Il Dragone".to_owned());
+
+    print_dragon(dragon);
 }
