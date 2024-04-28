@@ -19,6 +19,8 @@ impl Display for ObjType {
         }
     }
 }
+
+#[derive(Clone, Debug)]
 struct Obj {
     id: String,
     obj_type: ObjType,
@@ -40,6 +42,7 @@ trait IObj {
         &self.as_obj().obj_type
     }
 }
+#[derive(Clone, Debug)]
 struct Animal {
     obj: Obj,
     given_name: String,
@@ -54,10 +57,15 @@ impl Animal {
 }
 trait IAnimal: IObj {
     fn as_animal(&self) -> &Animal;
+    fn as_mut_animal(&mut self) -> &mut Animal;
     fn get_given_name(&self) -> &String {
         &self.as_animal().given_name
     }
+    fn set_given_name(&mut self, given_name: String) {
+        (self.as_mut_animal()).given_name = given_name;
+    }
 }
+#[derive(Clone, Debug)]
 struct Bird {
     animal: Animal,
 }
@@ -72,10 +80,15 @@ impl IAnimal for Bird {
     fn as_animal(&self) -> &Animal {
         &self.animal
     }
+    fn as_mut_animal(&mut self) -> &mut Animal {
+        &mut self.animal
+    }
 }
 trait IBird: IAnimal {
     fn as_bird(&self) -> &Bird;
+    fn as_mut_bird(&mut self) -> &mut Bird;
 }
+#[derive(Clone, Debug)]
 struct Lizard {
     animal: Animal,
 }
@@ -90,12 +103,16 @@ impl IAnimal for Lizard {
     fn as_animal(&self) -> &Animal {
         &self.animal
     }
+    fn as_mut_animal(&mut self) -> &mut Animal {
+        &mut self.animal
+    }
 }
 trait ILizard: IAnimal {
     fn as_lizard(&self) -> &Lizard;
 }
 
 trait IDragon: IBird + ILizard {}
+#[derive(Clone, Debug)]
 struct Dragon {
     bird: Bird,
     lizard: Lizard,
@@ -111,6 +128,9 @@ impl Dragon {
 impl IBird for Dragon {
     fn as_bird(&self) -> &Bird {
         &self.bird
+    }
+    fn as_mut_bird(&mut self) -> &mut Bird {
+        &mut self.bird
     }
 }
 impl ILizard for Dragon {
@@ -133,6 +153,9 @@ where
 {
     fn as_animal(&self) -> &Animal {
         &self.as_bird().animal
+    }
+    fn as_mut_animal(&mut self) -> &mut Animal {
+        &mut self.as_mut_bird().animal
     }
 }
 
@@ -164,15 +187,18 @@ fn print_dragon(dragon: Dragon) {
 }
 
 pub fn obj_main() {
-    let bird: Bird = Bird::new("bird-1", ObjType::Bird, "Birdie".to_owned());
+    let mut bird: Bird = Bird::new("bird-1", ObjType::Bird, "Birdie".to_owned());
+    print_bird(bird.clone());
+    bird.set_given_name("Birdie Num".to_owned());
+    print_bird(bird.clone());
 
-    print_bird(bird);
+    let mut lizard: Lizard = Lizard::new("lizard-1", ObjType::Lizard, "Lizzie".to_owned());
+    print_lizard(lizard.clone());
+    lizard.set_given_name("Lizzy the Busy".to_owned());
+    print_lizard(lizard.clone());
 
-    let lizard: Lizard = Lizard::new("lizard-1", ObjType::Lizard, "Lizzie".to_owned());
-
-    print_lizard(lizard);
-
-    let dragon: Dragon = Dragon::new("dragon-1", ObjType::Dragon, "Il Dragone".to_owned());
-
-    print_dragon(dragon);
+    let mut dragon: Dragon = Dragon::new("dragon-1", ObjType::Dragon, "Il Dragone".to_owned());
+    print_dragon(dragon.clone());
+    dragon.set_given_name("Il Dragone Gigante".to_owned());
+    print_dragon(dragon.clone());
 }
