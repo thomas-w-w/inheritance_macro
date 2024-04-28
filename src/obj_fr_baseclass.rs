@@ -52,7 +52,7 @@ impl Animal {
         }
     }
 }
-trait IAnimal {
+trait IAnimal: IObj {
     fn as_animal(&self) -> &Animal;
     fn get_given_name(&self) -> &String {
         &self.as_animal().given_name
@@ -73,11 +73,8 @@ impl IAnimal for Bird {
         &self.animal
     }
 }
-trait IBird {
+trait IBird: IAnimal {
     fn as_bird(&self) -> &Bird;
-    fn get_given_name(&self) -> &String {
-        &self.as_bird().as_animal().given_name
-    }
 }
 struct Lizard {
     animal: Animal,
@@ -94,13 +91,11 @@ impl IAnimal for Lizard {
         &self.animal
     }
 }
-trait ILizard {
+trait ILizard: IAnimal {
     fn as_lizard(&self) -> &Lizard;
-    fn get_given_name(&self) -> &String {
-        &self.as_lizard().as_animal().given_name
-    }
 }
 
+trait IDragon: IBird + ILizard {}
 struct Dragon {
     bird: Bird,
     lizard: Lizard,
@@ -111,9 +106,6 @@ impl Dragon {
             bird: Bird::new(id, obj_type.clone(), given_name.clone()),
             lizard: Lizard::new(id, obj_type.clone(), given_name.clone()),
         }
-    }
-    fn get_given_name(&self) -> &String {
-        &self.as_lizard().as_animal().given_name
     }
 }
 impl IBird for Dragon {
@@ -134,6 +126,7 @@ where
         &self.as_animal().obj
     }
 }
+/// https://doc.rust-lang.org/rust-by-example/generics/where.html
 impl<T> IAnimal for T
 where
     T: IBird + ILizard,
