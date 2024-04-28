@@ -158,47 +158,31 @@ where
         &mut self.as_mut_bird().animal
     }
 }
-
-fn print_bird(bird: Bird) {
+fn print_animal<T>(animal: T)
+where
+    T: IAnimal,
+{
     println!(
-        "Bird id: {}, obj type: {}, given name: {}",
-        bird.get_id(),
-        bird.get_obj_type(),
-        bird.get_given_name()
-    );
-}
-
-fn print_lizard(lizard: Lizard) {
-    println!(
-        "Lizard id: {}, obj type: {}, given name: {}",
-        lizard.get_id(),
-        lizard.get_obj_type(),
-        lizard.get_given_name()
-    );
-}
-
-fn print_dragon(dragon: Dragon) {
-    println!(
-        "Dragon id: {}, obj type: {}, given name: {}",
-        dragon.get_id(),
-        dragon.get_obj_type(),
-        dragon.get_given_name()
+        "{} id: {}, given name: {}",
+        animal.get_obj_type(),
+        animal.get_id(),
+        animal.get_given_name()
     );
 }
 
 pub fn obj_main() {
     let mut bird: Bird = Bird::new("bird-1", ObjType::Bird, "Birdie".to_owned());
-    print_bird(bird.clone());
+    print_animal(bird.clone());
     bird.set_given_name("Birdie Num".to_owned());
-    print_bird(bird.clone());
+    print_animal(bird.clone());
 
     let mut lizard: Lizard = Lizard::new("lizard-1", ObjType::Lizard, "Lizzie".to_owned());
-    print_lizard(lizard.clone());
+    print_animal(lizard.clone());
     lizard.set_given_name("Lizzy the Busy".to_owned());
-    print_lizard(lizard.clone());
+    print_animal(lizard.clone());
 
     let mut dragon: Dragon = Dragon::new("dragon-1", ObjType::Dragon, "Il Dragone".to_owned());
-    print_dragon(dragon.clone());
+    print_animal(dragon.clone());
     dragon.set_given_name("Il Dragone Gigante".to_owned());
-    print_dragon(dragon.clone());
+    print_animal(dragon.clone());
 }
