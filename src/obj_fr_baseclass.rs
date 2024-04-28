@@ -3,6 +3,7 @@ use std::fmt::Display;
 #[derive(Clone, Debug)]
 pub enum ObjType {
     Obj,
+    Food,
     Animal,
     Bird,
     Lizard,
@@ -16,6 +17,7 @@ impl Display for ObjType {
             ObjType::Bird => write!(f, "Bird"),
             ObjType::Lizard => write!(f, "Lizard"),
             ObjType::Dragon => write!(f, "Dragon"),
+            ObjType::Food => write!(f, "Food"),
         }
     }
 }
@@ -42,16 +44,43 @@ trait IObj {
         &self.as_obj().obj_type
     }
 }
+
+#[derive(Clone, Debug)]
+struct Food {
+    obj: Obj,
+    food_capacity: i32,
+}
+impl Food {
+    fn new(id: &str, obj_type: ObjType, food_capacity: i32) -> Self {
+        Self {
+            obj: Obj::new(id, obj_type),
+            food_capacity,
+        }
+    }
+}
+trait IFood: IObj {
+    fn as_food(&self) -> &Food;
+    fn as_mut_food(&mut self) -> &mut Food;
+    fn eat(&mut self, chunk: i32) -> bool {
+        if self.as_mut_food().food_capacity > chunk {
+            self.as_mut_food().food_capacity -= chunk;
+            return true;
+        }
+        false
+    }
+}
 #[derive(Clone, Debug)]
 struct Animal {
     obj: Obj,
     given_name: String,
+    food_reserve: i32,
 }
 impl Animal {
-    fn new(id: &str, obj_type: ObjType, given_name: String) -> Self {
+    fn new(id: &str, obj_type: ObjType, given_name: String, food_reserve: i32) -> Self {
         Self {
             obj: Obj::new(id, obj_type),
             given_name,
+            food_reserve,
         }
     }
 }
@@ -64,15 +93,47 @@ trait IAnimal: IObj {
     fn set_given_name(&mut self, given_name: String) {
         (self.as_mut_animal()).given_name = given_name;
     }
+    fn get_food_reserve(&self) -> &i32 {
+        &self.as_animal().food_reserve
+    }
+    fn set_food_reserve(&mut self, food_reserve: i32) {
+        (self.as_mut_animal()).food_reserve = food_reserve;
+    }
+    fn eat(&mut self, food: &mut Food) -> bool {
+        if (food.food_capacity >= 100) {
+            food.food_capacity -= 100;
+            self.as_mut_animal().food_reserve += 100;
+            println!(
+                "{} {} ate, remaining food reserve: {}, remaining food_capacity: {}",
+                self.get_obj_type(),
+                self.get_id(),
+                self.get_food_reserve(),
+                food.food_capacity
+            );
+            return true;
+        }
+        false
+    }
 }
 #[derive(Clone, Debug)]
 struct Bird {
     animal: Animal,
+    maximum_speed: i32,
+    wing_span: i32,
 }
 impl Bird {
-    fn new(id: &str, obj_type: ObjType, given_name: String) -> Self {
+    fn new(
+        id: &str,
+        obj_type: ObjType,
+        given_name: String,
+        food_reserve: i32,
+        maximum_speed: i32,
+        wing_span: i32,
+    ) -> Self {
         Self {
-            animal: Animal::new(id, obj_type, given_name),
+            animal: Animal::new(id, obj_type, given_name, food_reserve),
+            maximum_speed: maximum_speed,
+            wing_span: wing_span,
         }
     }
 }
@@ -87,15 +148,50 @@ impl IAnimal for Bird {
 trait IBird: IAnimal {
     fn as_bird(&self) -> &Bird;
     fn as_mut_bird(&mut self) -> &mut Bird;
+
+    fn get_wing_span(&self) -> &i32 {
+        &self.as_bird().wing_span
+    }
+    fn set_wing_span(&mut self, wing_span: i32) {
+        (self.as_mut_bird()).wing_span = wing_span;
+    }
+    fn get_maximum_speed(&self) -> &i32 {
+        &self.as_bird().maximum_speed
+    }
+    fn set_maximum_speed(&mut self, maximum_speed: i32) {
+        (self.as_mut_bird()).maximum_speed = maximum_speed;
+    }
 }
+
+impl IBird for Bird {
+    fn as_bird(&self) -> &Bird {
+        self
+    }
+
+    fn as_mut_bird(&mut self) -> &mut Bird {
+        self
+    }
+}
+
 #[derive(Clone, Debug)]
 struct Lizard {
     animal: Animal,
+    number_of_claws: i32,
+    scale_colors: String,
 }
 impl Lizard {
-    fn new(id: &str, obj_type: ObjType, given_name: String) -> Self {
+    fn new(
+        id: &str,
+        obj_type: ObjType,
+        given_name: String,
+        food_reserve: i32,
+        number_of_claws: i32,
+        scale_colors: String,
+    ) -> Self {
         Self {
-            animal: Animal::new(id, obj_type, given_name),
+            animal: Animal::new(id, obj_type, given_name, food_reserve),
+            number_of_claws,
+            scale_colors,
         }
     }
 }
@@ -109,19 +205,98 @@ impl IAnimal for Lizard {
 }
 trait ILizard: IAnimal {
     fn as_lizard(&self) -> &Lizard;
+    fn as_mut_lizard(&mut self) -> &mut Lizard;
+    fn get_number_of_claws(&self) -> &i32 {
+        &self.as_lizard().number_of_claws
+    }
+    fn set_number_of_claws(&mut self, number_of_claws: i32) {
+        (self.as_mut_lizard()).number_of_claws = number_of_claws;
+    }
+    fn get_scale_colors(&self) -> &String {
+        &self.as_lizard().scale_colors
+    }
+    fn set_scale_colors(&mut self, scale_colors: String) {
+        (self.as_mut_lizard()).scale_colors = scale_colors;
+    }
+}
+impl ILizard for Lizard {
+    fn as_lizard(&self) -> &Lizard {
+        self
+    }
+
+    fn as_mut_lizard(&mut self) -> &mut Lizard {
+        self
+    }
 }
 
-trait IDragon: IBird + ILizard {}
+trait IDragon: IBird + ILizard {
+    fn as_dragon(&self) -> &Dragon;
+    fn as_mut_dragon(&mut self) -> &mut Dragon;
+    fn get_fire_capacity(&self) -> &i32 {
+        &self.as_dragon().fire_capacity
+    }
+    fn set_fire_capacity(&mut self, fire_capacity: i32) {
+        (self.as_mut_dragon()).fire_capacity = fire_capacity;
+    }
+    fn fire(&mut self) -> bool {
+        let fire_capacity = self.get_fire_capacity();
+        if *fire_capacity >= 10 {
+            self.set_fire_capacity(*fire_capacity - 10);
+            println!(
+                "Dragon {} fired, remaining fire capacity: {}",
+                self.get_given_name(),
+                self.get_fire_capacity()
+            );
+            return true;
+        }
+        false
+    }
+}
+impl IDragon for Dragon {
+    fn as_dragon(&self) -> &Dragon {
+        self
+    }
+
+    fn as_mut_dragon(&mut self) -> &mut Dragon {
+        self
+    }
+}
 #[derive(Clone, Debug)]
 struct Dragon {
     bird: Bird,
     lizard: Lizard,
+    fire_capacity: i32,
 }
 impl Dragon {
-    fn new(id: &str, obj_type: ObjType, given_name: String) -> Self {
+    fn new(
+        id: &str,
+        obj_type: ObjType,
+        given_name: String,
+        food_reserve: i32,
+        maximum_speed: i32,
+        wing_span: i32,
+        number_of_claws: i32,
+        scale_colors: String,
+        fire_capacity: i32,
+    ) -> Self {
         Self {
-            bird: Bird::new(id, obj_type.clone(), given_name.clone()),
-            lizard: Lizard::new(id, obj_type.clone(), given_name.clone()),
+            bird: Bird::new(
+                id,
+                obj_type.clone(),
+                given_name.clone(),
+                food_reserve,
+                maximum_speed,
+                wing_span,
+            ),
+            lizard: Lizard::new(
+                id,
+                obj_type.clone(),
+                given_name.clone(),
+                food_reserve,
+                number_of_claws,
+                scale_colors,
+            ),
+            fire_capacity,
         }
     }
 }
@@ -136,6 +311,9 @@ impl IBird for Dragon {
 impl ILizard for Dragon {
     fn as_lizard(&self) -> &Lizard {
         &self.lizard
+    }
+    fn as_mut_lizard(&mut self) -> &mut Lizard {
+        &mut self.lizard
     }
 }
 impl<T> IObj for T
@@ -158,31 +336,61 @@ where
         &mut self.as_mut_bird().animal
     }
 }
-fn print_animal<T>(animal: T)
-where
-    T: IAnimal,
-{
-    println!(
-        "{} id: {}, given name: {}",
-        animal.get_obj_type(),
-        animal.get_id(),
-        animal.get_given_name()
-    );
-}
-
 pub fn obj_main() {
-    let mut bird: Bird = Bird::new("bird-1", ObjType::Bird, "Birdie".to_owned());
-    print_animal(bird.clone());
+    let mut food = &mut Food {
+        obj: Obj::new("food-1", ObjType::Food),
+        food_capacity: 1000000,
+    };
+
+    let mut bird: Bird = Bird::new("bird-1", ObjType::Bird, "Birdie".to_owned(), 100, 10, 4);
+    println!("\r\n{:?}\r\n", bird.clone());
     bird.set_given_name("Birdie Num".to_owned());
-    print_animal(bird.clone());
+    bird.set_food_reserve(200);
+    bird.set_maximum_speed(1000);
+    bird.set_wing_span(10);
+    println!("\r\n{:?}\r\n", bird.clone());
+    bird.eat(&mut food);
+    println!("\r\n{:?}\r\n{:?}\r\n", bird.clone(), food.clone());
 
-    let mut lizard: Lizard = Lizard::new("lizard-1", ObjType::Lizard, "Lizzie".to_owned());
-    print_animal(lizard.clone());
+    let mut lizard: Lizard = Lizard::new(
+        "lizard-1",
+        ObjType::Lizard,
+        "Lizzie".to_owned(),
+        1000,
+        24,
+        "blue, red, green".to_owned(),
+    );
+    println!("\r\n{:?}\r\n", lizard.clone());
     lizard.set_given_name("Lizzy the Busy".to_owned());
-    print_animal(lizard.clone());
+    lizard.set_food_reserve(1000);
+    lizard.set_number_of_claws(42);
+    lizard.set_scale_colors("yellow blue".to_owned());
+    println!("\r\n{:?}\r\n", lizard.clone());
+    lizard.eat(food);
+    println!("\r\n{:?}\r\n{:?}\r\n", lizard.clone(), food.clone());
 
-    let mut dragon: Dragon = Dragon::new("dragon-1", ObjType::Dragon, "Il Dragone".to_owned());
-    print_animal(dragon.clone());
+    let mut dragon: Dragon = Dragon::new(
+        "dragon-1",
+        ObjType::Dragon,
+        "Il Dragone".to_owned(),
+        10000,
+        100,
+        10,
+        36,
+        "green, red,".to_owned(),
+        400,
+    );
+    println!("\r\n{:?}\r\n", dragon.clone());
     dragon.set_given_name("Il Dragone Gigante".to_owned());
-    print_animal(dragon.clone());
+    dragon.set_food_reserve(20000);
+    dragon.set_maximum_speed(2000);
+    dragon.set_wing_span(25);
+    dragon.set_number_of_claws(72);
+    dragon.set_scale_colors("white blue".to_owned());
+    dragon.set_fire_capacity(4000);
+    println!("\r\n{:?}\r\n", dragon.clone());
+    dragon.eat(food);
+    println!("\r\n{:?}\r\n{:?}\r\n", dragon.clone(), food.clone());
+    dragon.fire();
+    println!("\r\n{:?}\r\n", dragon.clone());
 }
