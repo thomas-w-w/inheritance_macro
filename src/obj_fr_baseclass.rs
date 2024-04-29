@@ -300,22 +300,6 @@ impl Dragon {
         }
     }
 }
-impl IBird for Dragon {
-    fn as_bird(&self) -> &Bird {
-        &self.bird
-    }
-    fn as_mut_bird(&mut self) -> &mut Bird {
-        &mut self.bird
-    }
-}
-impl ILizard for Dragon {
-    fn as_lizard(&self) -> &Lizard {
-        &self.lizard
-    }
-    fn as_mut_lizard(&mut self) -> &mut Lizard {
-        &mut self.lizard
-    }
-}
 impl<T> IObj for T
 where
     T: IAnimal,
@@ -336,6 +320,29 @@ where
         &mut self.as_mut_bird().animal
     }
 }
+impl<T> IBird for T
+where
+    T: IDragon,
+{
+    fn as_bird(&self) -> &Bird {
+        &self.as_dragon().bird
+    }
+    fn as_mut_bird(&mut self) -> &mut Bird {
+        &mut self.as_mut_dragon().bird
+    }
+}
+impl<T> ILizard for T
+where
+    T: IDragon,
+{
+    fn as_lizard(&self) -> &Lizard {
+        &self.as_dragon().lizard
+    }
+    fn as_mut_lizard(&mut self) -> &mut Lizard {
+        &mut self.as_mut_dragon().lizard
+    }
+}
+
 pub fn obj_main() {
     let mut food = &mut Food {
         obj: Obj::new("food-1", ObjType::Food),
@@ -394,3 +401,4 @@ pub fn obj_main() {
     dragon.fire();
     println!("\r\n{:?}\r\n", dragon.clone());
 }
+//https://medium.com/comsystoreply/28-days-of-rust-part-2-composition-over-inheritance-cab1b106534a#id_token=eyJhbGciOiJSUzI1NiIsImtpZCI6ImFjM2UzZTU1ODExMWM3YzdhNzVjNWI2NTEzNGQyMmY2M2VlMDA2ZDAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIyMTYyOTYwMzU4MzQtazFrNnFlMDYwczJ0cDJhMmphbTRsamRjbXMwMHN0dGcuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMTYyOTYwMzU4MzQtazFrNnFlMDYwczJ0cDJhMmphbTRsamRjbXMwMHN0dGcuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDg1MTI2MDQ3MjEyNzU4ODQzMjQiLCJlbWFpbCI6InRob21hcy53ZXN0ZXJnYXJkQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYmYiOjE3MTQzMzgzNTgsIm5hbWUiOiJUaG9tYXMgV2VzdGVyZ2FyZCIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NKMTF4amowR0JMc1BJb3dVSUEySkV4TW9hRHZXeGJ0VUFHRmNMS25XMmF1YU9wS0E9czk2LWMiLCJnaXZlbl9uYW1lIjoiVGhvbWFzIiwiZmFtaWx5X25hbWUiOiJXZXN0ZXJnYXJkIiwiaWF0IjoxNzE0MzM4NjU4LCJleHAiOjE3MTQzNDIyNTgsImp0aSI6ImMwY2IyZTllNDg5YWE0NzcxYjc0NzBhZDJkNGUzMjA2ZGIxM2IyMjkifQ.NtnmCLmOqm2aTywS2BpXwGiqhWMnJmQSgm6dew6e-ptmq2nU5t7IK85NKyPXULvU_E2IZKUhiGYxRaeE7wCn070Vsj4QtV_KU0uJ-pCZYj4D7NL86WOUwvnyeUwjBhj5bgoAos0iwmUWL2QHa2UnRvnYdaTyKtmbw9kSAw4N0iaNPwWfzyo1k2FRq_v0qOHDZWEoSZYmLdxeBZ5xbZrzCZm26t1_0M7BjZs03R174yUsxYlvc6ZfgpdL_qQ1X4HYaKq9GDL4v1GbOUBni0RtRfKahpn4RIX6161CYicb-WaYuVMKj4_dfJ4z4G_Ofvnz3Z10e3M4aSSNZ5XpPuPKYA
