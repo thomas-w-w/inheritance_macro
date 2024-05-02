@@ -30,6 +30,15 @@ struct World {
     animals: Vec<Animal>,
     food: Option<Arc<Mutex<Food>>>,
 }
+pub trait IObj {
+    fn as_obj(&self) -> &Obj;
+    fn get_id(&self) -> &str {
+        &self.as_obj().id
+    }
+    fn get_obj_type(&self) -> &ObjType {
+        &self.as_obj().obj_type
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct Obj {
@@ -42,15 +51,6 @@ impl Obj {
             id: id.to_string(),
             obj_type: obj_type,
         }
-    }
-}
-trait IObj {
-    fn as_obj(&self) -> &Obj;
-    fn get_id(&self) -> &str {
-        &self.as_obj().id
-    }
-    fn get_obj_type(&self) -> &ObjType {
-        &self.as_obj().obj_type
     }
 }
 
@@ -79,7 +79,7 @@ trait IFood: IObj {
     }
 }
 #[derive(Clone, Debug)]
-struct Animal {
+pub struct Animal {
     obj: Obj,
     given_name: String,
     food_reserve: i32,
@@ -113,20 +113,20 @@ pub trait IAnimal: IObj {
     fn eat(&mut self, shared_food: Arc<Mutex<Food>>) -> bool {
         println!("eat start");
 
-        let try_lock_result = shared_food.try_lock();
+        let mut food = shared_food.lock().unwrap();
 
-        let mut food: std::sync::MutexGuard<Food>;
+        //let mut food: std::sync::MutexGuard<Food>;
 
-        match try_lock_result {
-            Ok(result) => {
-                food = result;
-                println!("eat: ok aquire lock")
-            }
-            Err(err) => {
-                println!("eat: error aquire lock: {:?}", err);
-                panic!();
-            }
-        }
+        // // match try_lock_result {
+        // //     Ok(result) => {
+        // //         food = result;
+        // //         println!("eat: ok aquire lock")
+        // //     }
+        // //     Err(err) => {
+        // //         println!("eat: error aquire lock: {:?}", err);
+        // //         panic!();
+        // //     }
+        // // }
 
         //let mut food = shared_food.try_lock().unwrap();
 
@@ -149,9 +149,6 @@ pub trait IAnimal: IObj {
     }
 }
 
-fn get_world() -> World {
-    todo!()
-}
 #[derive(Clone, Debug)]
 pub struct Bird {
     animal: Animal,

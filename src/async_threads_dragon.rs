@@ -10,7 +10,7 @@ use obj_fr_baseclass::{Dragon, Food, IAnimal, IBird, IDragon, ILizard, ObjType};
 use crate::obj_fr_baseclass;
 
 pub async fn main_dragon() {
-    let food_resource = Arc::new(Mutex::new(Food::new("Food-1", ObjType::Food, 100)));
+    let food_resource = Arc::new(Mutex::new(Food::new("Food-1", ObjType::Food, 10000)));
 
     let mut dragon = Dragon::new(
         "dragon-1",
@@ -69,25 +69,37 @@ pub async fn main_dragon() {
         let dragon_clone = Arc::clone(&dragon_arc);
 
         let handle = thread::spawn(move || {
-            let dragon_lock = dragon_clone.lock().unwrap();
-            let given_name = dragon_lock.get_given_name().clone();
-            drop(dragon_lock);
-
             loop {
+                let mut dragon_lock = dragon_clone.lock().unwrap();
+                let given_name = dragon_lock.get_given_name().clone();
+
                 let shared_food_resource_lock = shared_food_resource.lock().unwrap();
                 let food_capacity = shared_food_resource_lock.food_capacity.clone();
+
+                println!("Global food capacity: {food_capacity}, reported by Dragon: {given_name}");
                 drop(shared_food_resource_lock);
 
-                let mut dragon_lock = dragon_clone.lock().unwrap();
-                let ate: bool = dragon_lock.eat(shared_food_resource);
+                let ate: bool = dragon_lock.eat(shared_food_resource.clone()).clone();
+
+                let mut do_break = false;
+
+                if dragon_lock.fire(shared_food_resource.clone()) {
+                    println!("Dragon {given_name} FIRED.");
+                } else {
+                    println!("Dragon {given_name} did NOT fire. BREAK.");
+                    do_break = true;
+                }
+
                 drop(dragon_lock);
 
-                println!(
-                    "inside lopp, given name: {}, global food capacity: {}, ate: {}",
-                    given_name, food_capacity, ate
-                );
+                if do_break {
+                    break;
+                }
 
-                break;
+                // println!(
+                //     "inside lopp, given name: {}, global food capacity: {}, ate: {}",
+                //     given_name, food_capacity, ate
+                // );
             }
             let str = format!("{i}").as_str().to_owned();
             Ok(str)
