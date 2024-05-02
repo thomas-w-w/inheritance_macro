@@ -32,7 +32,7 @@ struct World {
 }
 
 #[derive(Clone, Debug)]
-struct Obj {
+pub struct Obj {
     id: String,
     obj_type: ObjType,
 }
@@ -55,12 +55,12 @@ trait IObj {
 }
 
 #[derive(Clone, Debug)]
-struct Food {
+pub struct Food {
     obj: Obj,
-    food_capacity: i32,
+    pub food_capacity: i32,
 }
 impl Food {
-    fn new(id: &str, obj_type: ObjType, food_capacity: i32) -> Self {
+    pub fn new(id: &str, obj_type: ObjType, food_capacity: i32) -> Self {
         Self {
             obj: Obj::new(id, obj_type),
             food_capacity,
@@ -93,7 +93,7 @@ impl Animal {
         }
     }
 }
-trait IAnimal: IObj {
+pub trait IAnimal: IObj {
     fn as_animal(&self) -> &Animal;
     fn as_mut_animal(&mut self) -> &mut Animal;
     fn get_given_name(&self) -> &String {
@@ -153,7 +153,7 @@ fn get_world() -> World {
     todo!()
 }
 #[derive(Clone, Debug)]
-struct Bird {
+pub struct Bird {
     animal: Animal,
     maximum_speed: i32,
     wing_span: i32,
@@ -182,7 +182,7 @@ impl IAnimal for Bird {
         &mut self.animal
     }
 }
-trait IBird: IAnimal {
+pub trait IBird: IAnimal {
     fn as_bird(&self) -> &Bird;
     fn as_mut_bird(&mut self) -> &mut Bird;
 
@@ -211,7 +211,7 @@ impl IBird for Bird {
 }
 
 #[derive(Clone, Debug)]
-struct Lizard {
+pub struct Lizard {
     animal: Animal,
     number_of_claws: i32,
     scale_colors: String,
@@ -240,7 +240,7 @@ impl IAnimal for Lizard {
         &mut self.animal
     }
 }
-trait ILizard: IAnimal {
+pub trait ILizard: IAnimal {
     fn as_lizard(&self) -> &Lizard;
     fn as_mut_lizard(&mut self) -> &mut Lizard;
     fn get_number_of_claws(&self) -> &i32 {
@@ -266,7 +266,7 @@ impl ILizard for Lizard {
     }
 }
 
-trait IDragon: IBird + ILizard {
+pub trait IDragon: IBird + ILizard {
     fn as_dragon(&self) -> &Dragon;
     fn as_mut_dragon(&mut self) -> &mut Dragon;
     fn get_fire_capacity(&self) -> &i32 {
@@ -319,13 +319,13 @@ impl IDragon for Dragon {
     }
 }
 #[derive(Clone, Debug)]
-struct Dragon {
+pub struct Dragon {
     bird: Bird,
     lizard: Lizard,
     fire_capacity: i32,
 }
 impl Dragon {
-    fn new(
+    pub(crate) fn new(
         id: &str,
         obj_type: ObjType,
         given_name: String,
