@@ -60,7 +60,8 @@ fn main() {
     // // test_foo();
     // // test_dragon();
     // // baseclass_main();
-    // // obj_main();
+    // //
+    obj_main();
     block_on(main_dragon());
 }
 
