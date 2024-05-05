@@ -46,7 +46,7 @@ pub struct Obj {
     obj_type: ObjType,
 }
 impl Obj {
-    fn new(id: &str, obj_type: ObjType) -> Self {
+    pub fn new(id: &str, obj_type: ObjType) -> Self {
         Self {
             id: id.to_string(),
             obj_type: obj_type,
@@ -78,21 +78,7 @@ trait IFood: IObj {
         false
     }
 }
-#[derive(Clone, Debug)]
-pub struct Animal {
-    obj: Obj,
-    given_name: String,
-    food_reserve: i32,
-}
-impl Animal {
-    fn new(id: &str, obj_type: ObjType, given_name: String, food_reserve: i32) -> Self {
-        Self {
-            obj: Obj::new(id, obj_type),
-            given_name,
-            food_reserve,
-        }
-    }
-}
+
 pub trait IAnimal: IObj {
     fn as_animal(&self) -> &Animal;
     fn as_mut_animal(&mut self) -> &mut Animal;
@@ -100,20 +86,29 @@ pub trait IAnimal: IObj {
         &self.as_animal().given_name
     }
     fn set_given_name(&mut self, given_name: String) {
-        (self.as_mut_animal()).given_name = given_name;
+        self.as_mut_animal().given_name = given_name;
     }
     fn get_food_reserve(&self) -> &i32 {
         &self.as_animal().food_reserve
     }
     fn set_food_reserve(&mut self, food_reserve: i32) {
-        (self.as_mut_animal()).food_reserve = food_reserve;
+        self.as_mut_animal().food_reserve = food_reserve;
     }
+    fn get_shared_food(&self) -> &Arc<Mutex<Food>> {
+        &self.as_animal().shared_food
+    }
+    fn set_shared_food(&mut self, shared_food: Arc<Mutex<Food>>) {
+        self.as_mut_animal().shared_food = shared_food;
+    }
+
     //    fn eat_meat(&self, shared_food: Arc<Mutex<Food>>) -> _ {
 
-    fn eat(&mut self, shared_food: Arc<Mutex<Food>>) -> bool {
+    fn eat(&mut self) -> bool {
         println!("eat start");
 
-        let mut food = shared_food.lock().unwrap();
+        let mut food = self.as_animal().shared_food.lock().unwrap();
+
+        //drop(food);
 
         //let mut food: std::sync::MutexGuard<Food>;
 
@@ -134,7 +129,7 @@ pub trait IAnimal: IObj {
 
         if (food.food_capacity >= 100) {
             food.food_capacity -= 100;
-            self.as_mut_animal().food_reserve += 100;
+            //self.set_food_reserve(100);
             println!(
                 "{} {} ate, remaining food reserve: {}, remaining food_capacity: {}",
                 self.get_obj_type(),
@@ -142,10 +137,53 @@ pub trait IAnimal: IObj {
                 self.get_food_reserve(),
                 food.food_capacity
             );
+            drop(food);
+            self.set_food_reserve(self.get_food_reserve() + 100);
             return true;
         }
         println!("eat end -- false");
         false
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Animal {
+    obj: Obj,
+    given_name: String,
+    food_reserve: i32,
+    shared_food: Arc<Mutex<Food>>,
+}
+impl Animal {
+    pub fn new(
+        obj: Obj,
+        given_name: String,
+        food_reserve: i32,
+        shared_food: Arc<Mutex<Food>>,
+    ) -> Self {
+        Self {
+            obj: obj,
+            given_name,
+            food_reserve,
+            shared_food,
+        }
+    }
+}
+
+pub trait IBird: IAnimal {
+    fn as_bird(&self) -> &Bird;
+    fn as_mut_bird(&mut self) -> &mut Bird;
+
+    fn get_wing_span(&self) -> &i32 {
+        &self.as_bird().wing_span
+    }
+    fn set_wing_span(&mut self, wing_span: i32) {
+        self.as_mut_bird().wing_span = wing_span;
+    }
+    fn get_maximum_speed(&self) -> &i32 {
+        &self.as_bird().maximum_speed
+    }
+    fn set_maximum_speed(&mut self, maximum_speed: i32) {
+        self.as_mut_bird().maximum_speed = maximum_speed;
     }
 }
 
@@ -156,16 +194,9 @@ pub struct Bird {
     wing_span: i32,
 }
 impl Bird {
-    fn new(
-        id: &str,
-        obj_type: ObjType,
-        given_name: String,
-        food_reserve: i32,
-        maximum_speed: i32,
-        wing_span: i32,
-    ) -> Self {
+    pub fn new(animal: Animal, maximum_speed: i32, wing_span: i32) -> Self {
         Self {
-            animal: Animal::new(id, obj_type, given_name, food_reserve),
+            animal: animal,
             maximum_speed: maximum_speed,
             wing_span: wing_span,
         }
@@ -179,23 +210,6 @@ impl IAnimal for Bird {
         &mut self.animal
     }
 }
-pub trait IBird: IAnimal {
-    fn as_bird(&self) -> &Bird;
-    fn as_mut_bird(&mut self) -> &mut Bird;
-
-    fn get_wing_span(&self) -> &i32 {
-        &self.as_bird().wing_span
-    }
-    fn set_wing_span(&mut self, wing_span: i32) {
-        (self.as_mut_bird()).wing_span = wing_span;
-    }
-    fn get_maximum_speed(&self) -> &i32 {
-        &self.as_bird().maximum_speed
-    }
-    fn set_maximum_speed(&mut self, maximum_speed: i32) {
-        (self.as_mut_bird()).maximum_speed = maximum_speed;
-    }
-}
 
 impl IBird for Bird {
     fn as_bird(&self) -> &Bird {
@@ -204,37 +218,6 @@ impl IBird for Bird {
 
     fn as_mut_bird(&mut self) -> &mut Bird {
         self
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Lizard {
-    animal: Animal,
-    number_of_claws: i32,
-    scale_colors: String,
-}
-impl Lizard {
-    fn new(
-        id: &str,
-        obj_type: ObjType,
-        given_name: String,
-        food_reserve: i32,
-        number_of_claws: i32,
-        scale_colors: String,
-    ) -> Self {
-        Self {
-            animal: Animal::new(id, obj_type, given_name, food_reserve),
-            number_of_claws,
-            scale_colors,
-        }
-    }
-}
-impl IAnimal for Lizard {
-    fn as_animal(&self) -> &Animal {
-        &self.animal
-    }
-    fn as_mut_animal(&mut self) -> &mut Animal {
-        &mut self.animal
     }
 }
 pub trait ILizard: IAnimal {
@@ -263,6 +246,30 @@ impl ILizard for Lizard {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Lizard {
+    animal: Animal,
+    number_of_claws: i32,
+    scale_colors: String,
+}
+impl Lizard {
+    pub fn new(animal: Animal, number_of_claws: i32, scale_colors: String) -> Self {
+        Self {
+            animal: animal,
+            number_of_claws,
+            scale_colors,
+        }
+    }
+}
+impl IAnimal for Lizard {
+    fn as_animal(&self) -> &Animal {
+        &self.animal
+    }
+    fn as_mut_animal(&mut self) -> &mut Animal {
+        &mut self.animal
+    }
+}
+
 pub trait IDragon: IBird + ILizard {
     fn as_dragon(&self) -> &Dragon;
     fn as_mut_dragon(&mut self) -> &mut Dragon;
@@ -272,25 +279,32 @@ pub trait IDragon: IBird + ILizard {
     fn set_fire_capacity(&mut self, fire_capacity: i32) {
         (self.as_mut_dragon()).fire_capacity = fire_capacity;
     }
-    fn fire(&mut self, shared_food: Arc<Mutex<Food>>) -> bool {
-        let fire_capacity = self.get_fire_capacity().clone();
+    fn fire(&mut self) -> bool {
+        let mut fire_capacity = self.get_fire_capacity().clone();
 
         println!("fire: fire_capacity: {fire_capacity}");
 
-        while (fire_capacity <= 10) {
-            println!("fire: while loop");
-            let ate = self.eat(Arc::clone(&shared_food));
+        while (fire_capacity < 10) {
+            println!("fire: while loop, fire_capacity: {fire_capacity}");
+            let ate = self.eat();
             if !ate {
                 println!(
-                    "{:?} Failed to eat while fire capacity too low. Break.",
+                    "fire: {:?} Failed to eat while fire capacity too low. Break.",
                     self.as_dragon().clone()
                 );
                 break;
             } else {
-                if self.get_food_reserve().to_owned() > 100 {
-                    self.set_fire_capacity(10);
-                    self.set_food_reserve(10);
+                // 20 food reserve => 10 fire capacity
+                fire_capacity = self.get_fire_capacity().clone();
+                if self.get_food_reserve().to_owned() >= 20 {
+                    self.set_fire_capacity(self.get_fire_capacity() + 10);
+                    self.set_food_reserve(self.get_food_reserve() - 20);
                 }
+                println!(
+                    "fire: ATE, fire capacity: {}, food reserve: {}.",
+                    self.get_fire_capacity(),
+                    self.get_food_reserve()
+                );
             }
         }
 
@@ -322,34 +336,10 @@ pub struct Dragon {
     fire_capacity: i32,
 }
 impl Dragon {
-    pub(crate) fn new(
-        id: &str,
-        obj_type: ObjType,
-        given_name: String,
-        food_reserve: i32,
-        maximum_speed: i32,
-        wing_span: i32,
-        number_of_claws: i32,
-        scale_colors: String,
-        fire_capacity: i32,
-    ) -> Self {
+    pub(crate) fn new(bird: Bird, lizard: Lizard, fire_capacity: i32) -> Self {
         Self {
-            bird: Bird::new(
-                id,
-                obj_type.clone(),
-                given_name.clone(),
-                food_reserve,
-                maximum_speed,
-                wing_span,
-            ),
-            lizard: Lizard::new(
-                id,
-                obj_type.clone(),
-                given_name.clone(),
-                food_reserve,
-                number_of_claws,
-                scale_colors,
-            ),
+            bird: bird,
+            lizard: lizard,
             fire_capacity,
         }
     }
@@ -407,7 +397,10 @@ pub fn obj_main() {
         food: Some(Arc::clone(&shared_food)),
     };
 
-    let mut bird: Bird = Bird::new("bird-1", ObjType::Bird, "Birdie".to_owned(), 100, 10, 4);
+    let obj = Obj::new("bird-1", ObjType::Bird);
+    let animal = Animal::new(obj, "Birdie".to_owned(), 100, Arc::clone(&shared_food));
+
+    let mut bird = Bird::new(animal, 10, 4);
     println!("\r\n{:?}\r\n", bird.clone());
 
     bird.set_given_name("Birdie Num".to_owned());
@@ -416,43 +409,28 @@ pub fn obj_main() {
     bird.set_wing_span(10);
     println!("\r\n{:?}\r\n", bird.clone());
 
-    bird.eat(Arc::clone(&shared_food));
+    bird.eat();
 
     let food = shared_food.lock().unwrap();
     println!("\r\n{:?}\r\n{:?}\r\n", bird.clone(), food.clone());
     drop(food);
 
-    let mut lizard: Lizard = Lizard::new(
-        "lizard-1",
-        ObjType::Lizard,
-        "Lizzie".to_owned(),
-        1000,
-        24,
-        "blue, red, green".to_owned(),
-    );
+    let mut lizard = Lizard::new(animal, 24, "blue, red, green".to_owned());
+
     println!("\r\n{:?}\r\n", lizard.clone());
     lizard.set_given_name("Lizzy the Busy".to_owned());
     lizard.set_food_reserve(1000);
     lizard.set_number_of_claws(42);
     lizard.set_scale_colors("yellow blue".to_owned());
     println!("\r\n{:?}\r\n", lizard.clone());
-    lizard.eat(Arc::clone(&shared_food));
+    lizard.eat();
 
     let food = shared_food.lock().unwrap();
     println!("\r\n{:?}\r\n{:?}\r\n", lizard.clone(), food.clone());
     drop(food);
 
-    let mut dragon: Dragon = Dragon::new(
-        "dragon-1",
-        ObjType::Dragon,
-        "Il Dragone".to_owned(),
-        50,
-        100,
-        10,
-        36,
-        "green, red,".to_owned(),
-        5,
-    );
+    let mut dragon = Dragon::new(bird, lizard, 5);
+
     println!("\r\n{:?}\r\n", dragon.clone());
     dragon.set_given_name("Il Dragone Gigante".to_owned());
     dragon.set_food_reserve(50);
@@ -462,29 +440,13 @@ pub fn obj_main() {
     dragon.set_scale_colors("white blue".to_owned());
     dragon.set_fire_capacity(5);
     println!("\r\n{:?}\r\n", dragon.clone());
-    dragon.eat(Arc::clone(&shared_food));
+    dragon.eat();
 
     let food = shared_food.lock().unwrap();
     println!("\r\n{:?}\r\n{:?}\r\n", dragon.clone(), food.clone());
     drop(food);
 
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
-    dragon.fire(Arc::clone(&shared_food));
+    dragon.fire();
     println!("\r\n{:?}\r\n", dragon.clone());
 }
 //https://medium.com/comsystoreply/28-days-of-rust-part-2-composition-over-inheritance-cab1b106534a#id_token=eyJhbGciOiJSUzI1NiIsImtpZCI6ImFjM2UzZTU1ODExMWM3YzdhNzVjNWI2NTEzNGQyMmY2M2VlMDA2ZDAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIyMTYyOTYwMzU4MzQtazFrNnFlMDYwczJ0cDJhMmphbTRsamRjbXMwMHN0dGcuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMTYyOTYwMzU4MzQtazFrNnFlMDYwczJ0cDJhMmphbTRsamRjbXMwMHN0dGcuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDg1MTI2MDQ3MjEyNzU4ODQzMjQiLCJlbWFpbCI6InRob21hcy53ZXN0ZXJnYXJkQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYmYiOjE3MTQzMzgzNTgsIm5hbWUiOiJUaG9tYXMgV2VzdGVyZ2FyZCIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NKMTF4amowR0JMc1BJb3dVSUEySkV4TW9hRHZXeGJ0VUFHRmNMS25XMmF1YU9wS0E9czk2LWMiLCJnaXZlbl9uYW1lIjoiVGhvbWFzIiwiZmFtaWx5X25hbWUiOiJXZXN0ZXJnYXJkIiwiaWF0IjoxNzE0MzM4NjU4LCJleHAiOjE3MTQzNDIyNTgsImp0aSI6ImMwY2IyZTllNDg5YWE0NzcxYjc0NzBhZDJkNGUzMjA2ZGIxM2IyMjkifQ.NtnmCLmOqm2aTywS2BpXwGiqhWMnJmQSgm6dew6e-ptmq2nU5t7IK85NKyPXULvU_E2IZKUhiGYxRaeE7wCn070Vsj4QtV_KU0uJ-pCZYj4D7NL86WOUwvnyeUwjBhj5bgoAos0iwmUWL2QHa2UnRvnYdaTyKtmbw9kSAw4N0iaNPwWfzyo1k2FRq_v0qOHDZWEoSZYmLdxeBZ5xbZrzCZm26t1_0M7BjZs03R174yUsxYlvc6ZfgpdL_qQ1X4HYaKq9GDL4v1GbOUBni0RtRfKahpn4RIX6161CYicb-WaYuVMKj4_dfJ4z4G_Ofvnz3Z10e3M4aSSNZ5XpPuPKYA
