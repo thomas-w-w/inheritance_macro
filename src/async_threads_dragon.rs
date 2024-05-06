@@ -1,6 +1,8 @@
 use std::{
     borrow::BorrowMut,
+    cell::RefCell,
     fmt::Error,
+    rc::Rc,
     sync::{Arc, Mutex},
     thread,
 };
@@ -12,7 +14,11 @@ use obj_fr_baseclass::{
 use crate::obj_fr_baseclass;
 
 pub async fn main_dragon() {
-    let food_resource = Arc::new(Mutex::new(Food::new("Food-1", ObjType::Food, 1000)));
+    let food_resource = Arc::new(Mutex::new(Food::new(
+        "Food-1".to_string(),
+        ObjType::Food,
+        1000,
+    )));
 
     // // let mut dragon = Dragon::new(
     // //     "dragon-1",
@@ -52,9 +58,14 @@ pub async fn main_dragon() {
         let scale_colors = "red green yellow".to_string();
         let fire_capacity = 100;
 
-        let obj = Obj::new(&id, ObjType::Dragon);
+        let obj = Arc::new(Mutex::new(Obj::new(id, ObjType::Dragon)));
 
-        let animal = Animal::new(obj, given_name, food_reserve, Arc::clone(&food_resource));
+        let animal = Animal::new(
+            Arc::clone(&obj),
+            given_name,
+            food_reserve,
+            Arc::clone(&food_resource),
+        );
 
         let bird = Bird::new(animal.clone(), maximum_speed, wing_span);
         let lizard = Lizard::new(animal.clone(), number_of_claws, scale_colors);

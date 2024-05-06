@@ -1,7 +1,11 @@
 use std::{
+    cell::RefCell,
     fmt::Display,
+    rc::Rc,
     sync::{Arc, Mutex},
 };
+
+type Pointer<T> = Arc<Mutex<T>>;
 
 #[derive(Clone, Debug)]
 pub enum ObjType {
@@ -31,12 +35,12 @@ struct World {
     food: Option<Arc<Mutex<Food>>>,
 }
 pub trait IObj {
-    fn as_obj(&self) -> &Obj;
-    fn get_id(&self) -> &str {
-        &self.as_obj().id
+    fn as_obj(&self) -> Pointer<Obj>;
+    fn get_id(&self) -> String {
+        self.as_obj().lock().unwrap().id.clone()
     }
-    fn get_obj_type(&self) -> &ObjType {
-        &self.as_obj().obj_type
+    fn get_obj_type(&self) -> ObjType {
+        self.as_obj().lock().unwrap().obj_type.clone()
     }
 }
 
@@ -46,9 +50,9 @@ pub struct Obj {
     obj_type: ObjType,
 }
 impl Obj {
-    pub fn new(id: &str, obj_type: ObjType) -> Self {
+    pub fn new(id: String, obj_type: ObjType) -> Self {
         Self {
-            id: id.to_string(),
+            id: id,
             obj_type: obj_type,
         }
     }
@@ -60,7 +64,7 @@ pub struct Food {
     pub food_capacity: i32,
 }
 impl Food {
-    pub fn new(id: &str, obj_type: ObjType, food_capacity: i32) -> Self {
+    pub fn new(id: String, obj_type: ObjType, food_capacity: i32) -> Self {
         Self {
             obj: Obj::new(id, obj_type),
             food_capacity,
@@ -148,14 +152,14 @@ pub trait IAnimal: IObj {
 
 #[derive(Clone, Debug)]
 pub struct Animal {
-    obj: Obj,
+    obj: Pointer<Obj>,
     given_name: String,
     food_reserve: i32,
     shared_food: Arc<Mutex<Food>>,
 }
 impl Animal {
     pub fn new(
-        obj: Obj,
+        obj: Pointer<Obj>,
         given_name: String,
         food_reserve: i32,
         shared_food: Arc<Mutex<Food>>,
@@ -348,8 +352,8 @@ impl<T> IObj for T
 where
     T: IAnimal,
 {
-    fn as_obj(&self) -> &Obj {
-        &self.as_animal().obj
+    fn as_obj(&self) -> Pointer<Obj> {
+        Arc::clone(&self.as_animal().obj)
     }
 }
 /// https://doc.rust-lang.org/rust-by-example/generics/where.html
@@ -388,7 +392,11 @@ where
 }
 
 pub fn obj_main() {
-    let mut shared_food = Arc::new(Mutex::new(Food::new("food-1", ObjType::Food, 100000)));
+    let mut shared_food = Arc::new(Mutex::new(Food::new(
+        "food-1".to_string(),
+        ObjType::Food,
+        100000,
+    )));
 
     //Arc<Mutex<Food>>
 
@@ -397,8 +405,13 @@ pub fn obj_main() {
         food: Some(Arc::clone(&shared_food)),
     };
 
-    let obj = Obj::new("bird-1", ObjType::Bird);
-    let animal = Animal::new(obj, "Birdie".to_owned(), 100, Arc::clone(&shared_food));
+    let obj = Arc::new(Mutex::new(Obj::new("bird-1".to_string(), ObjType::Bird)));
+    let animal = Animal::new(
+        Arc::clone(&obj),
+        "Birdie".to_string(),
+        100,
+        Arc::clone(&shared_food),
+    );
 
     let mut bird = Bird::new(animal.clone(), 10, 4);
     println!("\r\n{:?}\r\n", bird.clone());
