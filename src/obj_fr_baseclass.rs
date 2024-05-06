@@ -400,7 +400,7 @@ pub fn obj_main() {
     let obj = Obj::new("bird-1", ObjType::Bird);
     let animal = Animal::new(obj, "Birdie".to_owned(), 100, Arc::clone(&shared_food));
 
-    let mut bird = Bird::new(animal, 10, 4);
+    let mut bird = Bird::new(animal.clone(), 10, 4);
     println!("\r\n{:?}\r\n", bird.clone());
 
     bird.set_given_name("Birdie Num".to_owned());
@@ -415,7 +415,7 @@ pub fn obj_main() {
     println!("\r\n{:?}\r\n{:?}\r\n", bird.clone(), food.clone());
     drop(food);
 
-    let mut lizard = Lizard::new(animal, 24, "blue, red, green".to_owned());
+    let mut lizard = Lizard::new(animal.clone(), 24, "blue, red, green".to_owned());
 
     println!("\r\n{:?}\r\n", lizard.clone());
     lizard.set_given_name("Lizzy the Busy".to_owned());

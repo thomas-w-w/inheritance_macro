@@ -60,9 +60,9 @@ fn main() {
     // // test_foo();
     // // test_dragon();
     // // baseclass_main();
+    // //obj_main();
     // //
-    obj_main();
-    // // block_on(main_dragon());
+    block_on(main_dragon());
 }
 
 //fn do_work_w_dragon(dragon: Dragon) {}
