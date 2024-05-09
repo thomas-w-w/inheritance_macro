@@ -17,36 +17,15 @@ pub async fn main_dragon() {
     let food_resource = Arc::new(Mutex::new(Food::new(
         "Food-1".to_string(),
         ObjType::Food,
-        1000,
+        10000,
     )));
-
-    // // let mut dragon = Dragon::new(
-    // //     "dragon-1",
-    // //     ObjType::Dragon,
-    // //     "Il Dragone".to_owned(),
-    // //     50,
-    // //     100,
-    // //     10,
-    // //     36,
-    // //     "green, red,".to_owned(),
-    // //     5,
-    // // );
-    // // println!("\r\n{:?}\r\n", dragon.clone());
-    // // dragon.set_given_name("Il Dragone Gigante".to_owned());
-    // // dragon.set_food_reserve(50);
-    // // dragon.set_maximum_speed(20);
-    // // dragon.set_wing_span(25);
-    // // dragon.set_number_of_claws(72);
-    // // dragon.set_scale_colors("white blue".to_owned());
-    // // dragon.set_fire_capacity(5);
-    // // println!("\r\n{:?}\r\n", dragon.clone());
 
     let mut fire_handle_and_dragon_vect: Vec<(
         std::thread::JoinHandle<Result<String, Error>>,
         Arc<Mutex<Dragon>>,
     )> = vec![];
 
-    for i in 2..3 {
+    for i in 2..5 {
         let shared_food_resource: Arc<Mutex<Food>> = Arc::clone(&food_resource);
 
         let id = format!("{}-{}", ObjType::Dragon, i);
@@ -80,10 +59,10 @@ pub async fn main_dragon() {
 
                 let mut dragon_lock = dragon_clone.lock().unwrap();
 
-                println!(
-                    "loop: after dragon lock, before get_given_name(), dragon lock: {:?}",
-                    dragon_lock
-                );
+                // println!(
+                //     "loop: after dragon lock, before get_given_name(), dragon lock: {:?}",
+                //     dragon_lock
+                // );
 
                 let given_name = dragon_lock.get_given_name().clone();
 
@@ -94,16 +73,14 @@ pub async fn main_dragon() {
 
                 let shared_food_resource_lock = shared_food_resource.lock().unwrap();
 
-                println!("loop: after shared food lock, before drop shared food lock");
-
                 drop(shared_food_resource_lock);
 
                 let mut do_break = false;
 
                 if dragon_lock.fire() {
-                    println!("Dragon {given_name} FIRED.");
+                    println!("loop: Dragon {given_name} FIRED.");
                 } else {
-                    println!("Dragon {given_name} did NOT fire. BREAK.");
+                    println!("loop: Dragon {given_name} did NOT fire. BREAK.");
                     do_break = true;
                 }
 
