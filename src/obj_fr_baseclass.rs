@@ -5,6 +5,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use traitcast::{Traitcast, TraitcastFrom};
+
 type Pointer<T> = Arc<Mutex<T>>;
 
 #[derive(Clone, Debug)]
@@ -160,6 +162,7 @@ pub struct Animal {
     food_reserve: i32,
     shared_food: Arc<Mutex<Food>>,
 }
+
 impl Animal {
     pub fn new(
         obj: Pointer<Obj>,
@@ -173,6 +176,14 @@ impl Animal {
             food_reserve,
             shared_food,
         }
+    }
+}
+impl<T> IObj for T
+where
+    T: IAnimal,
+{
+    fn as_obj(&self) -> Pointer<Obj> {
+        Arc::clone(&self.as_animal().lock().as_ref().unwrap().obj)
     }
 }
 
@@ -199,6 +210,7 @@ pub struct Bird {
     maximum_speed: i32,
     wing_span: i32,
 }
+
 impl Bird {
     pub fn new(animal: Pointer<Animal>, maximum_speed: i32, wing_span: i32) -> Self {
         Self {
@@ -208,18 +220,24 @@ impl Bird {
         }
     }
 }
+
 impl IAnimal for Bird {
     fn as_animal(&self) -> Pointer<Animal> {
-        println!("impl IAnimal for Bird::as_animal: start / end");
         Arc::clone(&self.animal)
     }
 }
 
-// // // // impl IBird for Bird {
-// // // //     fn as_bird(&self) -> Pointer<Bird> {
-// // // //         self
-// // // //     }
-// // // // }
+struct SelfOrPointer<T> {
+    myself: Option<T>,
+    pointer: Option<Pointer<T>>,
+}
+
+//PointerOrSelf struct SelfOrPointer<T> {self:Option<T>,pointer: Pointer<T>}
+impl IBird for Bird {
+    fn as_bird(&self) -> Pointer<Bird> {
+        Arc::new(Mutex::new(self.clone()))
+    }
+}
 
 pub trait ILizard: IAnimal {
     fn as_lizard(&self) -> Pointer<Lizard>;
@@ -237,18 +255,13 @@ pub trait ILizard: IAnimal {
     }
 }
 
-// // // // impl ILizard for Lizard {
-// // // //     fn as_lizard(&self) -> Pointer<Lizard> {
-// // // //         self
-// // // //     }
-// // // // }
-
 #[derive(Clone, Debug)]
 pub struct Lizard {
     animal: Pointer<Animal>,
     number_of_claws: i32,
     scale_colors: String,
 }
+
 impl Lizard {
     pub fn new(animal: Pointer<Animal>, number_of_claws: i32, scale_colors: String) -> Self {
         Self {
@@ -258,10 +271,37 @@ impl Lizard {
         }
     }
 }
+
 impl IAnimal for Lizard {
     fn as_animal(&self) -> Pointer<Animal> {
-        println!("impl IAnimal for Lizard::as_animal: start / end");
         Arc::clone(&self.animal)
+    }
+}
+
+/// Finally, it’s possible to implement a trait for all classes
+///  that implement one of a number of other traits.
+///
+/// It requires specialization, which is a nightly feature
+/// for now (though there is a workaround available,
+/// even packed in a macro crate if you don’t want to
+/// write out all the boilerplate required).
+///
+/// Traits may very well inherit from each other,
+/// though they only prescribe behavior, not data.
+///
+/// https://blog.logrocket.com/understanding-inheritance-other-limitations-rust/#Inheritance%20in%20Rust
+///
+/// This Rust guide was updated on 3 Aug, 2022
+/// May 14, 2021 Andre "llogiq" Bogus
+///  
+/// https://github.com/dtolnay/case-studies/blob/master/autoref-specialization/README.md
+///
+impl<T> IAnimal for T
+where
+    T: IBird + ILizard,
+{
+    fn as_animal(&self) -> Pointer<Animal> {
+        Arc::clone(&self.as_bird().lock().unwrap().animal)
     }
 }
 
@@ -340,21 +380,14 @@ pub trait IDragon: IBird + ILizard {
         false
     }
 }
-impl IDragon for Dragon {
-    fn as_dragon(&self) -> &Dragon {
-        self
-    }
 
-    fn as_mut_dragon(&mut self) -> &mut Dragon {
-        self
-    }
-}
 #[derive(Clone, Debug)]
 pub struct Dragon {
     bird: Pointer<Bird>,
     lizard: Pointer<Lizard>,
     fire_capacity: i32,
 }
+
 impl Dragon {
     pub(crate) fn new(bird: Pointer<Bird>, lizard: Pointer<Lizard>, fire_capacity: i32) -> Self {
         Self {
@@ -364,22 +397,20 @@ impl Dragon {
         }
     }
 }
-impl<T> IObj for T
-where
-    T: IAnimal,
-{
-    fn as_obj(&self) -> Pointer<Obj> {
-        Arc::clone(&self.as_animal().lock().as_ref().unwrap().obj)
+
+impl IDragon for Dragon {
+    fn as_dragon(&self) -> &Dragon {
+        self
+    }
+
+    fn as_mut_dragon(&mut self) -> &mut Dragon {
+        self
     }
 }
-impl<T> IAnimal for T
-where
-    T: IBird + ILizard,
-{
-    fn as_animal(&self) -> Pointer<Animal> {
-        Arc::clone(&self.as_bird().lock().unwrap().animal)
-    }
-}
+
+///"Lock data, not code" is enforced in Rust.
+/// https://brson.github.io/rust-anthology/1/fearless-concurrency.html
+
 impl<T> IBird for T
 where
     T: IDragon,

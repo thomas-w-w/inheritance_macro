@@ -25,7 +25,7 @@ pub async fn main_dragon() {
         Arc<Mutex<Dragon>>,
     )> = vec![];
 
-    for i in 2..4 {
+    for i in 2..3 {
         let shared_food_resource: Arc<Mutex<Food>> = Arc::clone(&food_resource);
 
         let id = format!("{}-{}", ObjType::Dragon, i);
@@ -94,6 +94,10 @@ pub async fn main_dragon() {
 
             println!("loop BIRD: bird_2_given_name: {}.", bird_2_given_name);
 
+            let bird_2_wing_span = bird_2_lock.get_wing_span().clone();
+
+            println!("loop BIRD: bird_2_wing_span: {}.", bird_2_wing_span);
+
             println!(
                 "///////////////////////////
 /// loop BIRD: bird_2_lock, before eat: {:?}.
@@ -109,7 +113,7 @@ pub async fn main_dragon() {
             );
         });
 
-        if i == 3 {
+        if i == 2 {
             let bird_3_clone = Arc::clone(&bird);
 
             let bird_3_handle = thread::spawn(move || loop {
@@ -184,6 +188,13 @@ pub async fn main_dragon() {
                     println!("loop: Dragon {given_name} did NOT fire. BREAK.");
                     do_break = true;
                 }
+
+                // // let dragon_as_bird = dragon_lock.as_bird().lock().unwrap();
+                // // let t = dragon_as_bird.get_wing_span();
+
+                let wing_span = dragon_lock.get_wing_span();
+
+                println!("loop: wing_span: {wing_span}");
 
                 drop(dragon_lock);
 
