@@ -177,20 +177,19 @@ impl Animal {
 }
 
 pub trait IBird: IAnimal {
-    fn as_bird(&self) -> &Bird;
-    fn as_mut_bird(&mut self) -> &mut Bird;
+    fn as_bird(&self) -> Pointer<Bird>;
 
-    fn get_wing_span(&self) -> &i32 {
-        &self.as_bird().wing_span
+    fn get_wing_span(&self) -> i32 {
+        self.as_bird().lock().unwrap().wing_span.to_owned()
     }
     fn set_wing_span(&mut self, wing_span: i32) {
-        self.as_mut_bird().wing_span = wing_span;
+        self.as_bird().lock().unwrap().wing_span = wing_span;
     }
-    fn get_maximum_speed(&self) -> &i32 {
-        &self.as_bird().maximum_speed
+    fn get_maximum_speed(&self) -> i32 {
+        self.as_bird().lock().unwrap().maximum_speed.to_owned()
     }
     fn set_maximum_speed(&mut self, maximum_speed: i32) {
-        self.as_mut_bird().maximum_speed = maximum_speed;
+        self.as_bird().lock().unwrap().maximum_speed = maximum_speed;
     }
 }
 
@@ -216,40 +215,33 @@ impl IAnimal for Bird {
     }
 }
 
-impl IBird for Bird {
-    fn as_bird(&self) -> &Bird {
-        self
-    }
+// // // // impl IBird for Bird {
+// // // //     fn as_bird(&self) -> Pointer<Bird> {
+// // // //         self
+// // // //     }
+// // // // }
 
-    fn as_mut_bird(&mut self) -> &mut Bird {
-        self
-    }
-}
 pub trait ILizard: IAnimal {
-    fn as_lizard(&self) -> &Lizard;
-    fn as_mut_lizard(&mut self) -> &mut Lizard;
-    fn get_number_of_claws(&self) -> &i32 {
-        &self.as_lizard().number_of_claws
+    fn as_lizard(&self) -> Pointer<Lizard>;
+    fn get_number_of_claws(&self) -> i32 {
+        self.as_lizard().lock().unwrap().number_of_claws.to_owned()
     }
     fn set_number_of_claws(&mut self, number_of_claws: i32) {
-        (self.as_mut_lizard()).number_of_claws = number_of_claws;
+        self.as_lizard().lock().unwrap().number_of_claws = number_of_claws;
     }
-    fn get_scale_colors(&self) -> &String {
-        &self.as_lizard().scale_colors
+    fn get_scale_colors(&self) -> String {
+        self.as_lizard().lock().unwrap().scale_colors.to_owned()
     }
     fn set_scale_colors(&mut self, scale_colors: String) {
-        (self.as_mut_lizard()).scale_colors = scale_colors;
+        self.as_lizard().lock().unwrap().scale_colors = scale_colors;
     }
 }
-impl ILizard for Lizard {
-    fn as_lizard(&self) -> &Lizard {
-        self
-    }
 
-    fn as_mut_lizard(&mut self) -> &mut Lizard {
-        self
-    }
-}
+// // // // impl ILizard for Lizard {
+// // // //     fn as_lizard(&self) -> Pointer<Lizard> {
+// // // //         self
+// // // //     }
+// // // // }
 
 #[derive(Clone, Debug)]
 pub struct Lizard {
@@ -359,12 +351,12 @@ impl IDragon for Dragon {
 }
 #[derive(Clone, Debug)]
 pub struct Dragon {
-    bird: Bird,
-    lizard: Lizard,
+    bird: Pointer<Bird>,
+    lizard: Pointer<Lizard>,
     fire_capacity: i32,
 }
 impl Dragon {
-    pub(crate) fn new(bird: Bird, lizard: Lizard, fire_capacity: i32) -> Self {
+    pub(crate) fn new(bird: Pointer<Bird>, lizard: Pointer<Lizard>, fire_capacity: i32) -> Self {
         Self {
             bird: bird,
             lizard: lizard,
@@ -385,28 +377,22 @@ where
     T: IBird + ILizard,
 {
     fn as_animal(&self) -> Pointer<Animal> {
-        Arc::clone(&self.as_bird().animal)
+        Arc::clone(&self.as_bird().lock().unwrap().animal)
     }
 }
 impl<T> IBird for T
 where
     T: IDragon,
 {
-    fn as_bird(&self) -> &Bird {
-        &self.as_dragon().bird
-    }
-    fn as_mut_bird(&mut self) -> &mut Bird {
-        &mut self.as_mut_dragon().bird
+    fn as_bird(&self) -> Pointer<Bird> {
+        Arc::clone(&self.as_dragon().bird)
     }
 }
 impl<T> ILizard for T
 where
     T: IDragon,
 {
-    fn as_lizard(&self) -> &Lizard {
-        &self.as_dragon().lizard
-    }
-    fn as_mut_lizard(&mut self) -> &mut Lizard {
-        &mut self.as_mut_dragon().lizard
+    fn as_lizard(&self) -> Pointer<Lizard> {
+        Arc::clone(&self.as_dragon().lizard)
     }
 }

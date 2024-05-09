@@ -17,7 +17,7 @@ pub async fn main_dragon() {
     let food_resource = Arc::new(Mutex::new(Food::new(
         "Food-1".to_string(),
         ObjType::Food,
-        10000,
+        500,
     )));
 
     let mut fire_handle_and_dragon_vect: Vec<(
@@ -46,8 +46,16 @@ pub async fn main_dragon() {
             Arc::clone(&food_resource),
         )));
 
-        let bird = Bird::new(Arc::clone(&animal), maximum_speed, wing_span);
-        let lizard = Lizard::new(Arc::clone(&animal), number_of_claws, scale_colors);
+        let bird = Arc::new(Mutex::new(Bird::new(
+            Arc::clone(&animal),
+            maximum_speed,
+            wing_span,
+        )));
+        let lizard = Arc::new(Mutex::new(Lizard::new(
+            Arc::clone(&animal),
+            number_of_claws,
+            scale_colors,
+        )));
 
         let dragon = Arc::new(Mutex::new(Dragon::new(bird, lizard, fire_capacity)));
 
