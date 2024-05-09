@@ -60,15 +60,15 @@ pub async fn main_dragon() {
 
         let obj = Arc::new(Mutex::new(Obj::new(id, ObjType::Dragon)));
 
-        let animal = Animal::new(
+        let animal = Arc::new(Mutex::new(Animal::new(
             Arc::clone(&obj),
             given_name,
             food_reserve,
             Arc::clone(&food_resource),
-        );
+        )));
 
-        let bird = Bird::new(animal.clone(), maximum_speed, wing_span);
-        let lizard = Lizard::new(animal.clone(), number_of_claws, scale_colors);
+        let bird = Bird::new(Arc::clone(&animal), maximum_speed, wing_span);
+        let lizard = Lizard::new(Arc::clone(&animal), number_of_claws, scale_colors);
 
         let dragon = Arc::new(Mutex::new(Dragon::new(bird, lizard, fire_capacity)));
 
@@ -76,10 +76,25 @@ pub async fn main_dragon() {
 
         let fire_handle = thread::spawn(move || {
             loop {
+                println!("loop: start");
+
                 let mut dragon_lock = dragon_clone.lock().unwrap();
+
+                println!(
+                    "loop: after dragon lock, before get_given_name(), dragon lock: {:?}",
+                    dragon_lock
+                );
+
                 let given_name = dragon_lock.get_given_name().clone();
 
+                println!(
+                    "loop: after get_given_name(): {}, before shared food lock",
+                    given_name
+                );
+
                 let shared_food_resource_lock = shared_food_resource.lock().unwrap();
+
+                println!("loop: after shared food lock, before drop shared food lock");
 
                 drop(shared_food_resource_lock);
 

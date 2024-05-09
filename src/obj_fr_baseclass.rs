@@ -37,7 +37,19 @@ struct World {
 pub trait IObj {
     fn as_obj(&self) -> Pointer<Obj>;
     fn get_id(&self) -> String {
-        self.as_obj().lock().unwrap().id.clone()
+        println!("get_id i");
+        let as_obj_arc_clone = self.as_obj();
+        println!("get_id ii");
+        let as_obj_clone = as_obj_arc_clone.lock();
+        println!("get_id iii");
+        let as_obj_clone_as_ref_mtx = as_obj_clone.as_ref().unwrap();
+        println!("get_id iv");
+        println!("get_id after mtxg_as_obj");
+        let id_clone = as_obj_clone_as_ref_mtx.id.clone();
+        // // println!("get_id after id_clone");
+        // // //self.as_obj().lock().unwrap().id.clone()
+        id_clone
+        //"foo id".to_string()
     }
     fn get_obj_type(&self) -> ObjType {
         self.as_obj().lock().unwrap().obj_type.clone()
@@ -84,68 +96,115 @@ trait IFood: IObj {
 }
 
 pub trait IAnimal: IObj {
-    fn as_animal(&self) -> &Animal;
-    fn as_mut_animal(&mut self) -> &mut Animal;
-    fn get_given_name(&self) -> &String {
-        &self.as_animal().given_name
+    fn as_animal(&self) -> Pointer<Animal>;
+
+    fn get_given_name(&self) -> String {
+        println!("get_given_name: start");
+
+        let a = self.as_animal();
+
+        println!("get_given_name: i");
+
+        let b = Arc::clone(&a);
+
+        println!("get_given_name: ii");
+
+        let c = b.lock();
+
+        println!("get_given_name: iii");
+
+        let d = c.as_ref().unwrap();
+
+        println!("get_given_name: iv");
+
+        let e = d.given_name.clone();
+
+        println!("get_given_name: v");
+
+        e
+        // self.as_animal().lock().unwrap().given_name.clone()
     }
     fn set_given_name(&mut self, given_name: String) {
-        self.as_mut_animal().given_name = given_name;
+        self.as_animal().lock().unwrap().given_name = given_name;
     }
-    fn get_food_reserve(&self) -> &i32 {
-        &self.as_animal().food_reserve
+    fn get_food_reserve(&self) -> i32 {
+        self.as_animal().lock().unwrap().food_reserve.clone()
     }
     fn set_food_reserve(&mut self, food_reserve: i32) {
-        self.as_mut_animal().food_reserve = food_reserve;
+        self.as_animal().lock().unwrap().food_reserve = food_reserve;
     }
-    fn get_shared_food(&self) -> &Arc<Mutex<Food>> {
-        &self.as_animal().shared_food
+    fn get_shared_food(&self) -> Arc<Mutex<Food>> {
+        Arc::clone(&self.as_animal().lock().unwrap().shared_food)
     }
-    fn set_shared_food(&mut self, shared_food: Arc<Mutex<Food>>) {
-        self.as_mut_animal().shared_food = shared_food;
-    }
-
-    //    fn eat_meat(&self, shared_food: Arc<Mutex<Food>>) -> _ {
 
     fn eat(&mut self) -> bool {
         println!("eat start");
 
-        let mut food = self.as_animal().shared_food.lock().unwrap();
+        let a = Arc::clone(&self.as_animal());
+        let b = a.lock();
+        let c = b.as_ref().unwrap();
 
-        //drop(food);
+        let given_name = c.given_name.clone();
+        let d = &c.shared_food;
 
-        //let mut food: std::sync::MutexGuard<Food>;
+        println!("eat: before lock d: {:?}", d);
+        let e = d.lock();
+        println!("eat: after lock d: {:?}", d);
+        let food = e.unwrap();
 
-        // // match try_lock_result {
-        // //     Ok(result) => {
-        // //         food = result;
-        // //         println!("eat: ok aquire lock")
-        // //     }
-        // //     Err(err) => {
-        // //         println!("eat: error aquire lock: {:?}", err);
-        // //         panic!();
-        // //     }
-        // // }
+        let food_capacity = food.food_capacity.clone();
 
-        //let mut food = shared_food.try_lock().unwrap();
+        println!(
+            "eat: lock acquired ii ii ii ii i, given name: {}",
+            given_name
+        );
 
-        println!("eat lock acquired");
+        drop(food);
+        drop(b);
 
-        if (food.food_capacity >= 100) {
-            food.food_capacity -= 100;
+        println!("eat: strong_count &a: {}", Arc::strong_count(&a));
+
+        println!("eat: get_id(): {}", self.get_id());
+        println!("eat: self.get_obj_type(): {}", self.get_obj_type());
+
+        let food_reserve = self.get_food_reserve();
+        println!("eat: food_reserve: {}", food_reserve);
+        println!("eat: food_capacity: {}", food_capacity);
+
+        // println!(
+        //     "{} {} ate, remaining food reserve: {}, remaining food_capacity: {}",
+        //     self.get_obj_type(),
+        //     self.get_id(),
+        //     self.get_food_reserve(),
+        //     food.food_capacity
+        // );
+
+        // // println!("eat food.food_capacity: {}", food.food_capacity);
+
+        if food_capacity >= 100 {
+            let a = Arc::clone(&self.as_animal());
+            let b = a.lock();
+            let c = b.as_ref().unwrap();
+            let d = &c.shared_food;
+            let e = d.lock();
+            let mut food = e.unwrap();
+            //food.food_capacity -= 100;
             //self.set_food_reserve(100);
+            food.food_capacity -= 100;
+            let food_capacity = food.food_capacity;
+            drop(food);
+            drop(b);
+            self.set_food_reserve(self.get_food_reserve() + 100);
             println!(
-                "{} {} ate, remaining food reserve: {}, remaining food_capacity: {}",
+                "eat: {} {} ate, remaining food reserve: {}, remaining food_capacity: {}",
                 self.get_obj_type(),
                 self.get_id(),
                 self.get_food_reserve(),
-                food.food_capacity
+                food_capacity
             );
-            drop(food);
-            self.set_food_reserve(self.get_food_reserve() + 100);
             return true;
         }
-        println!("eat end -- false");
+        println!("eat: end -- false");
         false
     }
 }
@@ -193,12 +252,12 @@ pub trait IBird: IAnimal {
 
 #[derive(Clone, Debug)]
 pub struct Bird {
-    animal: Animal,
+    animal: Pointer<Animal>,
     maximum_speed: i32,
     wing_span: i32,
 }
 impl Bird {
-    pub fn new(animal: Animal, maximum_speed: i32, wing_span: i32) -> Self {
+    pub fn new(animal: Pointer<Animal>, maximum_speed: i32, wing_span: i32) -> Self {
         Self {
             animal: animal,
             maximum_speed: maximum_speed,
@@ -207,11 +266,9 @@ impl Bird {
     }
 }
 impl IAnimal for Bird {
-    fn as_animal(&self) -> &Animal {
-        &self.animal
-    }
-    fn as_mut_animal(&mut self) -> &mut Animal {
-        &mut self.animal
+    fn as_animal(&self) -> Pointer<Animal> {
+        println!("impl IAnimal for Bird::as_animal: start / end");
+        Arc::clone(&self.animal)
     }
 }
 
@@ -252,12 +309,12 @@ impl ILizard for Lizard {
 
 #[derive(Clone, Debug)]
 pub struct Lizard {
-    animal: Animal,
+    animal: Pointer<Animal>,
     number_of_claws: i32,
     scale_colors: String,
 }
 impl Lizard {
-    pub fn new(animal: Animal, number_of_claws: i32, scale_colors: String) -> Self {
+    pub fn new(animal: Pointer<Animal>, number_of_claws: i32, scale_colors: String) -> Self {
         Self {
             animal: animal,
             number_of_claws,
@@ -266,11 +323,9 @@ impl Lizard {
     }
 }
 impl IAnimal for Lizard {
-    fn as_animal(&self) -> &Animal {
-        &self.animal
-    }
-    fn as_mut_animal(&mut self) -> &mut Animal {
-        &mut self.animal
+    fn as_animal(&self) -> Pointer<Animal> {
+        println!("impl IAnimal for Lizard::as_animal: start / end");
+        Arc::clone(&self.animal)
     }
 }
 
@@ -353,7 +408,10 @@ where
     T: IAnimal,
 {
     fn as_obj(&self) -> Pointer<Obj> {
-        Arc::clone(&self.as_animal().obj)
+        let a = Arc::clone(&self.as_animal());
+        let b = a.lock();
+        let c = b.as_ref().unwrap();
+        Arc::clone(&c.obj)
     }
 }
 /// https://doc.rust-lang.org/rust-by-example/generics/where.html
@@ -361,11 +419,31 @@ impl<T> IAnimal for T
 where
     T: IBird + ILizard,
 {
-    fn as_animal(&self) -> &Animal {
-        &self.as_bird().animal
-    }
-    fn as_mut_animal(&mut self) -> &mut Animal {
-        &mut self.as_mut_bird().animal
+    fn as_animal(&self) -> Pointer<Animal> {
+        // // // let a = self.as_bird();
+        // // // let b = &a.animal;
+        // // // Arc::clone(b)
+        // let a = Arc::clone(&self.as_animal());
+        // let b = a.lock();
+        // let c = b.as_ref().unwrap();
+        // Arc::clone(&c.obj)
+        // Arc::clone(&self.as_bird().animal)
+
+        println!("impl<T> IAnimal for T where T: IBird + ILizard::as_animal: i");
+        let a = self.as_bird();
+        println!("impl<T> IAnimal for T where T: IBird + ILizard::as_animal: ii");
+        let b = &a.animal;
+        println!(
+            "impl<T> IAnimal for T where T: IBird + ILizard::as_animal: iii/end: {:?}",
+            b
+        );
+        println!(
+            "impl<T> IAnimal for T where T: strong_count of b: {:?}",
+            Arc::strong_count(b)
+        );
+        let data = b.is_poisoned();
+        println!(": is poisoned: {}. End", data);
+        Arc::clone(b)
     }
 }
 impl<T> IBird for T
@@ -391,75 +469,4 @@ where
     }
 }
 
-pub fn obj_main() {
-    let mut shared_food = Arc::new(Mutex::new(Food::new(
-        "food-1".to_string(),
-        ObjType::Food,
-        100000,
-    )));
-
-    //Arc<Mutex<Food>>
-
-    let world = World {
-        animals: vec![],
-        food: Some(Arc::clone(&shared_food)),
-    };
-
-    let obj = Arc::new(Mutex::new(Obj::new("bird-1".to_string(), ObjType::Bird)));
-    let animal = Animal::new(
-        Arc::clone(&obj),
-        "Birdie".to_string(),
-        100,
-        Arc::clone(&shared_food),
-    );
-
-    let mut bird = Bird::new(animal.clone(), 10, 4);
-    println!("\r\n{:?}\r\n", bird.clone());
-
-    bird.set_given_name("Birdie Num".to_owned());
-    bird.set_food_reserve(200);
-    bird.set_maximum_speed(1000);
-    bird.set_wing_span(10);
-    println!("\r\n{:?}\r\n", bird.clone());
-
-    bird.eat();
-
-    let food = shared_food.lock().unwrap();
-    println!("\r\n{:?}\r\n{:?}\r\n", bird.clone(), food.clone());
-    drop(food);
-
-    let mut lizard = Lizard::new(animal.clone(), 24, "blue, red, green".to_owned());
-
-    println!("\r\n{:?}\r\n", lizard.clone());
-    lizard.set_given_name("Lizzy the Busy".to_owned());
-    lizard.set_food_reserve(1000);
-    lizard.set_number_of_claws(42);
-    lizard.set_scale_colors("yellow blue".to_owned());
-    println!("\r\n{:?}\r\n", lizard.clone());
-    lizard.eat();
-
-    let food = shared_food.lock().unwrap();
-    println!("\r\n{:?}\r\n{:?}\r\n", lizard.clone(), food.clone());
-    drop(food);
-
-    let mut dragon = Dragon::new(bird, lizard, 5);
-
-    println!("\r\n{:?}\r\n", dragon.clone());
-    dragon.set_given_name("Il Dragone Gigante".to_owned());
-    dragon.set_food_reserve(50);
-    dragon.set_maximum_speed(20);
-    dragon.set_wing_span(25);
-    dragon.set_number_of_claws(72);
-    dragon.set_scale_colors("white blue".to_owned());
-    dragon.set_fire_capacity(5);
-    println!("\r\n{:?}\r\n", dragon.clone());
-    dragon.eat();
-
-    let food = shared_food.lock().unwrap();
-    println!("\r\n{:?}\r\n{:?}\r\n", dragon.clone(), food.clone());
-    drop(food);
-
-    dragon.fire();
-    println!("\r\n{:?}\r\n", dragon.clone());
-}
 //https://medium.com/comsystoreply/28-days-of-rust-part-2-composition-over-inheritance-cab1b106534a#id_token=eyJhbGciOiJSUzI1NiIsImtpZCI6ImFjM2UzZTU1ODExMWM3YzdhNzVjNWI2NTEzNGQyMmY2M2VlMDA2ZDAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIyMTYyOTYwMzU4MzQtazFrNnFlMDYwczJ0cDJhMmphbTRsamRjbXMwMHN0dGcuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMTYyOTYwMzU4MzQtazFrNnFlMDYwczJ0cDJhMmphbTRsamRjbXMwMHN0dGcuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDg1MTI2MDQ3MjEyNzU4ODQzMjQiLCJlbWFpbCI6InRob21hcy53ZXN0ZXJnYXJkQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYmYiOjE3MTQzMzgzNTgsIm5hbWUiOiJUaG9tYXMgV2VzdGVyZ2FyZCIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NKMTF4amowR0JMc1BJb3dVSUEySkV4TW9hRHZXeGJ0VUFHRmNMS25XMmF1YU9wS0E9czk2LWMiLCJnaXZlbl9uYW1lIjoiVGhvbWFzIiwiZmFtaWx5X25hbWUiOiJXZXN0ZXJnYXJkIiwiaWF0IjoxNzE0MzM4NjU4LCJleHAiOjE3MTQzNDIyNTgsImp0aSI6ImMwY2IyZTllNDg5YWE0NzcxYjc0NzBhZDJkNGUzMjA2ZGIxM2IyMjkifQ.NtnmCLmOqm2aTywS2BpXwGiqhWMnJmQSgm6dew6e-ptmq2nU5t7IK85NKyPXULvU_E2IZKUhiGYxRaeE7wCn070Vsj4QtV_KU0uJ-pCZYj4D7NL86WOUwvnyeUwjBhj5bgoAos0iwmUWL2QHa2UnRvnYdaTyKtmbw9kSAw4N0iaNPwWfzyo1k2FRq_v0qOHDZWEoSZYmLdxeBZ5xbZrzCZm26t1_0M7BjZs03R174yUsxYlvc6ZfgpdL_qQ1X4HYaKq9GDL4v1GbOUBni0RtRfKahpn4RIX6161CYicb-WaYuVMKj4_dfJ4z4G_Ofvnz3Z10e3M4aSSNZ5XpPuPKYA
