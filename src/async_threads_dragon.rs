@@ -25,7 +25,7 @@ pub async fn main_dragon() {
         Arc<Mutex<Dragon>>,
     )> = vec![];
 
-    for i in 2..5 {
+    for i in 2..4 {
         let shared_food_resource: Arc<Mutex<Food>> = Arc::clone(&food_resource);
 
         let id = format!("{}-{}", ObjType::Dragon, i);
@@ -41,7 +41,7 @@ pub async fn main_dragon() {
 
         let animal = Arc::new(Mutex::new(Animal::new(
             Arc::clone(&obj),
-            given_name,
+            given_name.clone(),
             food_reserve,
             Arc::clone(&food_resource),
         )));
@@ -51,15 +51,93 @@ pub async fn main_dragon() {
             maximum_speed,
             wing_span,
         )));
+
         let lizard = Arc::new(Mutex::new(Lizard::new(
             Arc::clone(&animal),
             number_of_claws,
             scale_colors,
         )));
 
-        let dragon = Arc::new(Mutex::new(Dragon::new(bird, lizard, fire_capacity)));
+        let id_2 = format!("{}-{}", ObjType::Bird, i);
+
+        let obj_2 = Arc::new(Mutex::new(Obj::new(id_2, ObjType::Dragon)));
+
+        let animal_2 = Arc::new(Mutex::new(Animal::new(
+            Arc::clone(&obj_2),
+            given_name.clone(),
+            food_reserve,
+            Arc::clone(&food_resource),
+        )));
+
+        let bird_2 = Arc::new(Mutex::new(Bird::new(
+            Arc::clone(&animal_2),
+            maximum_speed,
+            wing_span,
+        )));
+
+        let dragon = Arc::new(Mutex::new(Dragon::new(
+            Arc::clone(&bird),
+            Arc::clone(&lizard),
+            fire_capacity,
+        )));
 
         let dragon_clone = Arc::clone(&dragon);
+
+        let bird_2_clone = Arc::clone(&bird_2);
+
+        let bird_2_handle = thread::spawn(move || {
+            println!("loop BIRD: start");
+
+            let mut bird_2_lock = bird_2_clone.lock().unwrap();
+
+            let bird_2_given_name = bird_2_lock.get_given_name().clone();
+
+            println!("loop BIRD: bird_2_given_name: {}.", bird_2_given_name);
+
+            println!(
+                "///////////////////////////
+/// loop BIRD: bird_2_lock, before eat: {:?}.
+//////////////////////////////",
+                bird_2_lock
+            );
+            bird_2_lock.eat();
+            println!(
+                "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\\\\\\\\\ loop BIRD: bird_2_lock, AFTER eat: {:?}.
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+                bird_2_lock
+            );
+        });
+
+        if i == 3 {
+            let bird_3_clone = Arc::clone(&bird);
+
+            let bird_3_handle = thread::spawn(move || loop {
+                println!("loop BIRD: start");
+
+                let mut bird_3_lock = bird_3_clone.lock().unwrap();
+
+                let bird_3_given_name = bird_3_lock.get_given_name().clone();
+
+                println!("loop BIRD: bird_3_given_name: {}.", bird_3_given_name);
+
+                println!(
+                    "///////////////////////////
+    /// loop BIRD: bird_3_lock, before eat: {:?}.
+    //////////////////////////////",
+                    bird_3_lock
+                );
+                bird_3_lock.eat();
+                println!(
+                    "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+    \\\\\\\\\\ loop BIRD: bird_3_lock, AFTER eat: {:?}.
+    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+                    bird_3_lock
+                );
+            });
+        }
+
+        let bird_2_clone = Arc::clone(&bird_2);
 
         let fire_handle = thread::spawn(move || {
             loop {
@@ -67,10 +145,25 @@ pub async fn main_dragon() {
 
                 let mut dragon_lock = dragon_clone.lock().unwrap();
 
-                // println!(
-                //     "loop: after dragon lock, before get_given_name(), dragon lock: {:?}",
-                //     dragon_lock
-                // );
+                let mut bird_2_lock = bird_2_clone.lock().unwrap();
+
+                let bird_2_given_name = bird_2_lock.get_given_name().clone();
+
+                println!("loop: bird_2_given_name: {}.", bird_2_given_name);
+
+                println!(
+                    "///////////////////////////
+/// loop: bird_2_lock, before eat: {:?}.
+//////////////////////////////",
+                    bird_2_lock
+                );
+                bird_2_lock.eat();
+                println!(
+                    "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\\\\\\\\\ loop: bird_2_lock, AFTER eat: {:?}.
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+                    bird_2_lock
+                );
 
                 let given_name = dragon_lock.get_given_name().clone();
 
