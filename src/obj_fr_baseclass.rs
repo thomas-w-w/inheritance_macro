@@ -1,11 +1,7 @@
 use std::{
-    cell::RefCell,
     fmt::Display,
-    rc::Rc,
     sync::{Arc, Mutex},
 };
-
-use traitcast::{Traitcast, TraitcastFrom};
 
 type Pointer<T> = Arc<Mutex<T>>;
 
@@ -117,8 +113,6 @@ pub trait IAnimal: IObj {
         drop(food);
         drop(b);
 
-        println!("eat: strong_count &a: {}", Arc::strong_count(&a));
-
         if food_capacity >= 100 {
             let a = Arc::clone(&self.as_animal());
             let b = a.lock();
@@ -128,7 +122,6 @@ pub trait IAnimal: IObj {
             let mut food = e.unwrap();
 
             food.food_capacity -= 100;
-            let food_capacity = food.food_capacity;
 
             //prevent dead lock
             drop(food);
@@ -136,21 +129,8 @@ pub trait IAnimal: IObj {
 
             self.set_food_reserve(self.get_food_reserve() + 100);
 
-            println!();
-            println!(
-                "eat: {} {} ate, remaining food reserve: {}, remaining food_capacity: {}",
-                self.get_obj_type(),
-                self.get_id(),
-                self.get_food_reserve(),
-                food_capacity
-            );
-            println!();
             return true;
         }
-        println!();
-        println!("eat: end -- false");
-        println!();
-
         false
     }
 }
@@ -228,11 +208,11 @@ impl IAnimal for Bird {
 }
 
 //PointerOrSelf struct SelfOrPointer<T> {self:Option<T>,pointer: Pointer<T>}
-impl IBird for Bird {
-    fn as_bird(&self) -> Pointer<Bird> {
-        Arc::new(Mutex::new(*self))
-    }
-}
+// impl IBird for Bird {
+//     fn as_bird(&self) -> Pointer<Bird> {
+//         Arc::new(Mutex::new(*self))
+//     }
+// }
 
 pub trait ILizard: IAnimal {
     fn as_lizard(&self) -> Pointer<Lizard>;
@@ -311,32 +291,19 @@ pub trait IDragon: IBird + ILizard {
     }
     fn fire(&mut self) -> bool {
         let mut fire_capacity = self.get_fire_capacity().clone();
-
-        println!("fire: fire_capacity: {fire_capacity}");
-
         //need 10+ fire to dire
         while fire_capacity < 10 {
-            println!("fire: while loop, fire_capacity: {fire_capacity}");
             if self.get_food_reserve() > 20 {
                 if self.get_food_reserve().to_owned() >= 20 {
                     self.set_fire_capacity(self.get_fire_capacity() + 10);
                     self.set_food_reserve(self.get_food_reserve() - 20);
                 }
                 fire_capacity = self.get_fire_capacity().clone();
-                println!("fire:");
-                println!("fire: food reserve converted to fire, self.get_food_reserve(): {}, self.get_fire_capacity(): {}", self.get_food_reserve(), self.get_fire_capacity());
-                println!("fire:");
                 break;
             }
 
             let ate = self.eat();
             if !ate {
-                println!();
-                println!(
-                    "fire: {:?} Failed to eat while fire capacity too low. Break.",
-                    self.as_dragon().clone()
-                );
-                println!();
                 break;
             } else {
                 // 20 food reserve => 10 fire capacity
@@ -346,32 +313,13 @@ pub trait IDragon: IBird + ILizard {
                     self.set_food_reserve(self.get_food_reserve() - 20);
                 }
                 fire_capacity = self.get_fire_capacity().clone();
-
-                println!();
-                println!(
-                    "fire: ATE, fire capacity: {}, food reserve: {}.",
-                    fire_capacity,
-                    self.get_food_reserve()
-                );
-                println!();
             }
         }
 
         if fire_capacity >= 10 {
             self.set_fire_capacity(fire_capacity - 10);
-            println!(
-                "fire: Dragon {} fired, remaining fire capacity: {}",
-                self.get_given_name(),
-                self.get_fire_capacity()
-            );
             return true;
         }
-        println!(
-            "fire: Dragon {} DID NOT fire, remaining fire capacity: {} and {}",
-            self.get_given_name(),
-            self.get_fire_capacity(),
-            fire_capacity
-        );
         false
     }
 }
