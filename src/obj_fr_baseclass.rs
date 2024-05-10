@@ -5,7 +5,7 @@ use std::{
 
 type Pointer<T> = Arc<Mutex<T>>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ObjType {
     Obj,
     Food,
@@ -96,7 +96,6 @@ pub trait IAnimal: IObj {
     }
 
     fn eat(&mut self) -> bool {
-        println!("eat start");
         let a = Arc::clone(&self.as_animal());
         let b = a.lock();
         let c = b.as_ref().unwrap();
@@ -118,14 +117,27 @@ pub trait IAnimal: IObj {
 
             food.food_capacity -= 100;
 
+            let food_capacity = food.food_capacity.clone();
+
             //prevent dead lock
             drop(food);
             drop(b);
 
             self.set_food_reserve(self.get_food_reserve() + 100);
 
+            println!(
+                "IAnimal::eat(): {} ate+100, food reserve: {}, global food capacity: {}",
+                self.get_id(),
+                self.get_food_reserve(),
+                food_capacity
+            );
+
             return true;
         }
+        println!(
+            "IAnimal::eat(): FAILED for {}, global food capacity less than 100.",
+            self.get_id()
+        );
         false
     }
 }
@@ -163,19 +175,48 @@ where
 }
 
 pub trait IBird: IAnimal {
-    fn as_bird(&self) -> Pointer<Bird>;
+    fn as_red_bird(&self) -> Option<&Bird> {
+        None
+    }
+    fn as_mut_bird(&mut self) -> Option<&mut Bird> {
+        None
+    }
+    fn as_bird(&self) -> Option<Pointer<Bird>> {
+        None
+    }
 
     fn get_wing_span(&self) -> i32 {
-        self.as_bird().lock().unwrap().wing_span.to_owned()
+        if ObjType::Bird == self.get_obj_type() {
+            self.as_red_bird().unwrap().wing_span.to_owned()
+        } else {
+            self.as_bird().unwrap().lock().unwrap().wing_span.to_owned()
+        }
     }
     fn set_wing_span(&mut self, wing_span: i32) {
-        self.as_bird().lock().unwrap().wing_span = wing_span;
+        if ObjType::Lizard == self.get_obj_type() {
+            self.as_mut_bird().unwrap().wing_span = wing_span;
+        } else {
+            self.as_bird().unwrap().lock().unwrap().wing_span = wing_span;
+        }
     }
     fn get_maximum_speed(&self) -> i32 {
-        self.as_bird().lock().unwrap().maximum_speed.to_owned()
+        if ObjType::Bird == self.get_obj_type() {
+            self.as_red_bird().unwrap().maximum_speed.to_owned()
+        } else {
+            self.as_bird()
+                .unwrap()
+                .lock()
+                .unwrap()
+                .maximum_speed
+                .to_owned()
+        }
     }
     fn set_maximum_speed(&mut self, maximum_speed: i32) {
-        self.as_bird().lock().unwrap().maximum_speed = maximum_speed;
+        if ObjType::Lizard == self.get_obj_type() {
+            self.as_mut_bird().unwrap().maximum_speed = maximum_speed;
+        } else {
+            self.as_bird().unwrap().lock().unwrap().maximum_speed = maximum_speed;
+        }
     }
 }
 
@@ -184,6 +225,16 @@ pub struct Bird {
     animal: Pointer<Animal>,
     maximum_speed: i32,
     wing_span: i32,
+}
+
+impl IBird for Bird {
+    fn as_red_bird(&self) -> Option<&Bird> {
+        Some(self)
+    }
+
+    fn as_mut_bird(&mut self) -> Option<&mut Bird> {
+        Some(self)
+    }
 }
 
 impl Bird {
@@ -202,26 +253,54 @@ impl IAnimal for Bird {
     }
 }
 
-//PointerOrSelf struct SelfOrPointer<T> {self:Option<T>,pointer: Pointer<T>}
-// impl IBird for Bird {
-//     fn as_bird(&self) -> Pointer<Bird> {
-//         Arc::new(Mutex::new(*self))
-//     }
-// }
-
 pub trait ILizard: IAnimal {
-    fn as_lizard(&self) -> Pointer<Lizard>;
+    fn as_red_lizard(&self) -> Option<&Lizard> {
+        None
+    }
+    fn as_mut_lizard(&mut self) -> Option<&mut Lizard> {
+        None
+    }
+    fn as_lizard(&self) -> Option<Pointer<Lizard>> {
+        None
+    }
     fn get_number_of_claws(&self) -> i32 {
-        self.as_lizard().lock().unwrap().number_of_claws.to_owned()
+        if ObjType::Lizard == self.get_obj_type() {
+            self.as_red_lizard().unwrap().number_of_claws.to_owned()
+        } else {
+            self.as_lizard()
+                .unwrap()
+                .lock()
+                .unwrap()
+                .number_of_claws
+                .to_owned()
+        }
     }
     fn set_number_of_claws(&mut self, number_of_claws: i32) {
-        self.as_lizard().lock().unwrap().number_of_claws = number_of_claws;
+        if ObjType::Lizard == self.get_obj_type() {
+            self.as_mut_lizard().unwrap().number_of_claws = number_of_claws;
+        } else {
+            self.as_lizard().unwrap().lock().unwrap().number_of_claws = number_of_claws;
+        }
     }
+
     fn get_scale_colors(&self) -> String {
-        self.as_lizard().lock().unwrap().scale_colors.to_owned()
+        if ObjType::Lizard == self.get_obj_type() {
+            self.as_red_lizard().unwrap().scale_colors.to_owned()
+        } else {
+            self.as_lizard()
+                .unwrap()
+                .lock()
+                .unwrap()
+                .scale_colors
+                .to_owned()
+        }
     }
     fn set_scale_colors(&mut self, scale_colors: String) {
-        self.as_lizard().lock().unwrap().scale_colors = scale_colors;
+        if ObjType::Lizard == self.get_obj_type() {
+            self.as_mut_lizard().unwrap().scale_colors = scale_colors;
+        } else {
+            self.as_lizard().unwrap().lock().unwrap().scale_colors = scale_colors;
+        }
     }
 }
 
@@ -230,6 +309,15 @@ pub struct Lizard {
     animal: Pointer<Animal>,
     number_of_claws: i32,
     scale_colors: String,
+}
+
+impl ILizard for Lizard {
+    fn as_mut_lizard(&mut self) -> Option<&mut Lizard> {
+        Some(self)
+    }
+    fn as_red_lizard(&self) -> Option<&Lizard> {
+        Some(self)
+    }
 }
 
 impl Lizard {
@@ -271,13 +359,14 @@ where
     T: IBird + ILizard,
 {
     fn as_animal(&self) -> Pointer<Animal> {
-        Arc::clone(&self.as_bird().lock().unwrap().animal)
+        Arc::clone(&self.as_bird().unwrap().lock().unwrap().animal)
     }
 }
 
 pub trait IDragon: IBird + ILizard {
     fn as_dragon(&self) -> &Dragon;
     fn as_mut_dragon(&mut self) -> &mut Dragon;
+
     fn get_fire_capacity(&self) -> &i32 {
         &self.as_dragon().fire_capacity
     }
@@ -353,15 +442,15 @@ impl<T> IBird for T
 where
     T: IDragon,
 {
-    fn as_bird(&self) -> Pointer<Bird> {
-        Arc::clone(&self.as_dragon().bird)
+    fn as_bird(&self) -> Option<Pointer<Bird>> {
+        Some(Arc::clone(&self.as_dragon().bird))
     }
 }
 impl<T> ILizard for T
 where
     T: IDragon,
 {
-    fn as_lizard(&self) -> Pointer<Lizard> {
-        Arc::clone(&self.as_dragon().lizard)
+    fn as_lizard(&self) -> Option<Pointer<Lizard>> {
+        Some(Arc::clone(&self.as_dragon().lizard))
     }
 }
