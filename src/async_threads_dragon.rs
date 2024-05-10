@@ -1,15 +1,10 @@
 use std::{
-    borrow::BorrowMut,
-    cell::RefCell,
     fmt::Error,
-    rc::Rc,
     sync::{Arc, Mutex},
     thread,
 };
 
-use obj_fr_baseclass::{
-    Animal, Bird, Dragon, Food, IAnimal, IBird, IDragon, ILizard, Lizard, Obj, ObjType,
-};
+use obj_fr_baseclass::{Animal, Bird, Dragon, Food, IDragon, Lizard, Obj, ObjType};
 
 use crate::obj_fr_baseclass;
 
