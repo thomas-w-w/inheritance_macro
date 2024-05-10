@@ -27,11 +27,6 @@ impl Display for ObjType {
     }
 }
 
-#[derive(Clone, Debug)]
-struct World {
-    animals: Vec<Animal>,
-    food: Option<Arc<Mutex<Food>>>,
-}
 pub trait IObj {
     fn as_obj(&self) -> Pointer<Obj>;
     fn get_id(&self) -> String {
