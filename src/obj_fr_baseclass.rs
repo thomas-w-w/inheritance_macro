@@ -227,15 +227,10 @@ impl IAnimal for Bird {
     }
 }
 
-struct SelfOrPointer<T> {
-    myself: Option<T>,
-    pointer: Option<Pointer<T>>,
-}
-
 //PointerOrSelf struct SelfOrPointer<T> {self:Option<T>,pointer: Pointer<T>}
 impl IBird for Bird {
     fn as_bird(&self) -> Pointer<Bird> {
-        Arc::new(Mutex::new(self.clone()))
+        Arc::new(Mutex::new(*self))
     }
 }
 
