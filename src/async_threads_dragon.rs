@@ -182,7 +182,7 @@ pub async fn main_dragon() {
                     break;
                 }
             }
-            let str = format!("{i}").as_str().to_owned();
+            let str = format!("{}", id.clone()).as_str().to_owned();
             Ok(str)
         });
 
@@ -233,7 +233,7 @@ pub async fn main_dragon() {
                     break;
                 }
             }
-            let str = format!("{i}").as_str().to_owned();
+            let str = format!("{}", id.clone()).as_str().to_owned();
             Ok(str)
         });
 
@@ -284,7 +284,7 @@ pub async fn main_dragon() {
                     break;
                 }
             }
-            let str = format!("{i}").as_str().to_owned();
+            let str = format!("{}", id.clone()).as_str().to_owned();
             Ok(str)
         });
 
@@ -317,8 +317,8 @@ pub async fn main_dragon() {
                 }
             };
 
-            let str = format!("{:?}", dragon_pointer).as_str().to_owned();
-            Ok(str)
+            //let str = format!("{:?}", dragon_pointer).as_str().to_owned();
+            Ok(s)
         });
 
         outer_handles.push(outer_handle);
@@ -348,8 +348,8 @@ pub async fn main_dragon() {
                 }
             };
 
-            let str = format!("{:?}", lizard_pointer).as_str().to_owned();
-            Ok(str)
+            //let str = format!("{:?}", lizard_pointer).as_str().to_owned();
+            Ok(s)
         });
 
         outer_handles.push(outer_handle);
@@ -379,8 +379,8 @@ pub async fn main_dragon() {
                 }
             };
 
-            let str = format!("{:?}", bird_pointer).as_str().to_owned();
-            Ok(str)
+            //let str = format!("{:?}", bird_pointer).as_str().to_owned();
+            Ok(s)
         });
 
         outer_handles.push(outer_handle);
@@ -392,7 +392,7 @@ pub async fn main_dragon() {
         let result = outer_handle.join();
         match result {
             Ok(s) => {
-                //println!("Join outer: Ok: {:?}", s);
+                println!("Join outer: Ok: {:?}", s);
             }
             Err(msg) => {
                 println!("Join outer: Err: {:?}", msg);
