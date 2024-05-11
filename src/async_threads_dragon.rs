@@ -392,7 +392,7 @@ pub async fn main_dragon() {
         let result = outer_handle.join();
         match result {
             Ok(s) => {
-                println!("Join outer: Ok: {:?}", s);
+                //println!("Join outer: Ok: {:?}", s);
             }
             Err(msg) => {
                 println!("Join outer: Err: {:?}", msg);

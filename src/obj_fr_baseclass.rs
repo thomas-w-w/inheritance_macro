@@ -96,23 +96,26 @@ pub trait IAnimal: IObj {
     }
 
     fn eat(&mut self) -> bool {
-        let animal_pointer = &self.as_animal();
-        let animal_pointer_lock = animal_pointer.lock();
-        let animal_mtx = animal_pointer_lock.as_ref().unwrap();
-        let food_pointer = &animal_mtx.shared_food;
-        let food_pointer_lock = food_pointer.lock();
-        let mut food = food_pointer_lock.unwrap();
+        let animal_pointer = self.as_animal();
+        let animal = animal_pointer.lock().unwrap();
+        let mut food = animal.shared_food.lock().unwrap();
 
-        let food_capacity = food.food_capacity.clone();
+        let mut food_capacity = food.food_capacity;
 
         if food_capacity >= 100 {
             food.food_capacity -= 100;
 
-            let food_capacity = food.food_capacity.clone();
+            food_capacity = food.food_capacity;
+            let s = format!(
+                "Animal given name: {}, food reserve: {}",
+                animal.given_name, animal.food_reserve
+            );
+
+            println!("IAnimal::eat(): eater: {s}");
 
             //prevent dead lock
             drop(food);
-            drop(animal_pointer_lock);
+            drop(animal);
 
             self.set_food_reserve(self.get_food_reserve() + 100);
 
@@ -127,7 +130,7 @@ pub trait IAnimal: IObj {
         } else {
             //prevent dead lock
             drop(food);
-            drop(animal_pointer_lock);
+            drop(animal);
 
             println!(
                 "IAnimal::eat(): FAILED for {}, global food capacity less than 100.",
