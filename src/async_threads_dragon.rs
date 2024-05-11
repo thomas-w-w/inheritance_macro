@@ -6,7 +6,7 @@ use std::{
 
 use obj_fr_baseclass::{Animal, Bird, Dragon, Food, IDragon, Lizard, Obj, ObjType};
 
-use crate::{obj_fr_baseclass, IAnimal, IBird, ILizard};
+use crate::{obj_fr_baseclass, IAnimal, IBird, ILizard, IObj};
 
 fn create_bird(
     id: String,
@@ -136,7 +136,7 @@ pub async fn main_dragon() {
     for i in 2..50 {
         let id = format!("{}-{}", ObjType::Dragon, i);
 
-        let dragon = create_dragon(
+        let dragon_pointer = create_dragon(
             id.clone(),
             format!("Red Dragon [{}]", id.clone()),
             food_reserve,
@@ -148,24 +148,35 @@ pub async fn main_dragon() {
             Arc::clone(&food_resource),
         );
 
-        let dragon_clone = Arc::clone(&dragon);
+        let dragon_pointer_clone = Arc::clone(&dragon_pointer);
 
         let fire_handle = thread::spawn(move || {
             loop {
-                let mut dragon_lock = dragon_clone.lock().unwrap();
+                let mut dragon = dragon_pointer_clone.lock().unwrap();
 
-                let given_name = dragon_lock.get_given_name();
+                let s = format!(
+                    "id: {}, obj type: {}, given name: {}, food reserve: {}, wing span: {}, max speed: {}, n claws: {}, colors: {}, fire capacity: {}",
+                    dragon.get_id(),
+                    dragon.get_obj_type(),
+                    dragon.get_given_name(),
+                    dragon.get_food_reserve(),
+                    dragon.get_wing_span(),
+                    dragon.get_maximum_speed(),
+                    dragon.get_number_of_claws(),
+                    dragon.get_scale_colors(),
+                    dragon.get_fire_capacity()
+                );
 
                 let mut do_break = false;
 
-                if dragon_lock.fire() {
-                    println!("loop: Dragon {given_name} FIRED.");
+                if dragon.fire() {
+                    println!("loop: Dragon [{s}] FIRED.");
                 } else {
-                    println!("loop: Dragon {given_name} did NOT fire. BREAK.");
+                    println!("loop: Dragon [{s}] did NOT fire. BREAK.");
                     do_break = true;
                 }
 
-                drop(dragon_lock);
+                drop(dragon);
 
                 if do_break {
                     break;
@@ -175,14 +186,14 @@ pub async fn main_dragon() {
             Ok(str)
         });
 
-        fire_handle_and_dragon_vect.push((fire_handle, dragon));
+        fire_handle_and_dragon_vect.push((fire_handle, dragon_pointer));
     }
 
     println!("# ##  ###   ####  M A I N III lizards  #####    ####   ###  ## #");
 
     for i in 50..90 {
         let id = format!("{}-{}", ObjType::Lizard, i);
-        let lizard = create_lizard(
+        let lizard_pointer = create_lizard(
             id.clone(),
             format!("Green Lizard [{}]", id.clone()),
             food_reserve,
@@ -191,26 +202,32 @@ pub async fn main_dragon() {
             Arc::clone(&food_resource),
         );
 
-        let lizard_clone = Arc::clone(&lizard);
+        let lizard_pointer_clone = Arc::clone(&lizard_pointer);
 
         let fire_handle = thread::spawn(move || {
             loop {
-                let mut lizard_lock = lizard_clone.lock().unwrap();
+                let mut lizard = lizard_pointer_clone.lock().unwrap();
 
-                let given_name = lizard_lock.get_given_name();
-                let number_of_claws = lizard_lock.get_number_of_claws();
-                let scale_colors = lizard_lock.get_scale_colors();
+                let s = format!(
+                    "id: {}, obj type: {}, given name: {}, food reserve: {} n claws: {}, colors: {}",
+                    lizard.get_id(),
+                    lizard.get_obj_type(),
+                    lizard.get_given_name(),
+                    lizard.get_food_reserve(),
+                    lizard.get_number_of_claws(),
+                    lizard.get_scale_colors(),
+                );
 
                 let mut do_break = false;
 
-                if lizard_lock.eat() {
-                    println!("loop: Lizard {given_name} w {number_of_claws} claws and colors: {scale_colors} ATE.");
+                if lizard.eat() {
+                    println!("loop: Lizard {s} ATE.");
                 } else {
-                    println!("loop: Lizard {given_name} w {number_of_claws} claws and colors: {scale_colors} did NOT eat. BREAK.");
+                    println!("loop: Lizard {s} did NOT eat. BREAK.");
                     do_break = true;
                 }
 
-                drop(lizard_lock);
+                drop(lizard);
 
                 if do_break {
                     break;
@@ -220,14 +237,14 @@ pub async fn main_dragon() {
             Ok(str)
         });
 
-        crawl_handle_and_lizard_vect.push((fire_handle, lizard));
+        crawl_handle_and_lizard_vect.push((fire_handle, lizard_pointer));
     }
 
     println!("# ##  ###   ####  M A I N IV birds  #####    ####   ###  ## #");
 
     for i in 90..130 {
         let id = format!("{}-{}", ObjType::Bird, i);
-        let bird = create_bird(
+        let bird_pointer = create_bird(
             id.clone(),
             format!("Blue Bird [{}]", id.clone()),
             food_reserve,
@@ -236,26 +253,32 @@ pub async fn main_dragon() {
             Arc::clone(&food_resource),
         );
 
-        let bird_clone = Arc::clone(&bird);
+        let bird_pointer_clone = Arc::clone(&bird_pointer);
 
         let fly_handle = thread::spawn(move || {
             loop {
-                let mut bird_lock = bird_clone.lock().unwrap();
+                let mut bird = bird_pointer_clone.lock().unwrap();
 
-                let given_name = bird_lock.get_given_name();
-                let wing_span = bird_lock.get_wing_span();
-                let maximum_speed = bird_lock.get_maximum_speed();
+                let s = format!(
+                    "id: {}, obj type: {}, given name: {}, food reserve: {}, wing span: {}, max speed: {}",
+                    bird.get_id(),
+                    bird.get_obj_type(),
+                    bird.get_given_name(),
+                    bird.get_food_reserve(),
+                    bird.get_wing_span(),
+                    bird.get_maximum_speed()
+                );
 
                 let mut do_break = false;
 
-                if bird_lock.eat() {
-                    println!("loop: Bird {given_name} w wing span: {wing_span} and maximum speed: {maximum_speed} ATE.");
+                if bird.eat() {
+                    println!("loop: Bird {s} ATE.");
                 } else {
-                    println!("loop: Bird {given_name} w wing span: {wing_span} and maximum speed: {maximum_speed} did NOT eat. BREAK.");
+                    println!("loop: Bird {s} did NOT eat. BREAK.");
                     do_break = true;
                 }
 
-                drop(bird_lock);
+                drop(bird);
 
                 if do_break {
                     break;
@@ -265,7 +288,7 @@ pub async fn main_dragon() {
             Ok(str)
         });
 
-        fly_handle_and_bird_vect.push((fly_handle, bird));
+        fly_handle_and_bird_vect.push((fly_handle, bird_pointer));
     }
 
     let mut outer_handles: Vec<std::thread::JoinHandle<Result<String, Error>>> = vec![];
@@ -274,13 +297,13 @@ pub async fn main_dragon() {
 
     for handle_and_dragon in fire_handle_and_dragon_vect {
         let handle = handle_and_dragon.0;
-        let dragon_res = handle_and_dragon.1;
+        let dragon_pointer = handle_and_dragon.1;
 
-        let dragon_lock = dragon_res.lock().unwrap();
+        let dragon = dragon_pointer.lock().unwrap();
 
-        println!("dragon_lock: {:?}", dragon_lock);
+        println!("dragon: {:?}", dragon);
 
-        drop(dragon_lock);
+        drop(dragon);
 
         let outer_handle = thread::spawn(move || {
             let result = handle.join();
@@ -294,7 +317,7 @@ pub async fn main_dragon() {
                 }
             };
 
-            let str = format!("{:?}", dragon_res).as_str().to_owned();
+            let str = format!("{:?}", dragon_pointer).as_str().to_owned();
             Ok(str)
         });
 
@@ -305,13 +328,13 @@ pub async fn main_dragon() {
 
     for handle_and_lizard in crawl_handle_and_lizard_vect {
         let handle = handle_and_lizard.0;
-        let lizard_res = handle_and_lizard.1;
+        let lizard_pointer = handle_and_lizard.1;
 
-        let lizard_lock = lizard_res.lock().unwrap();
+        let lizard = lizard_pointer.lock().unwrap();
 
-        println!("lizard_lock: {:?}", lizard_lock);
+        println!("lizard: {:?}", lizard);
 
-        drop(lizard_lock);
+        drop(lizard);
 
         let outer_handle = thread::spawn(move || {
             let result = handle.join();
@@ -325,7 +348,7 @@ pub async fn main_dragon() {
                 }
             };
 
-            let str = format!("{:?}", lizard_res).as_str().to_owned();
+            let str = format!("{:?}", lizard_pointer).as_str().to_owned();
             Ok(str)
         });
 
@@ -336,13 +359,13 @@ pub async fn main_dragon() {
 
     for handle_and_bird in fly_handle_and_bird_vect {
         let handle = handle_and_bird.0;
-        let bird_res = handle_and_bird.1;
+        let bird_pointer = handle_and_bird.1;
 
-        let bird_lock = bird_res.lock().unwrap();
+        let bird = bird_pointer.lock().unwrap();
 
-        println!("bird_lock: {:?}", bird_lock);
+        println!("bird: {:?}", bird);
 
-        drop(bird_lock);
+        drop(bird);
 
         let outer_handle = thread::spawn(move || {
             let result = handle.join();
@@ -356,7 +379,7 @@ pub async fn main_dragon() {
                 }
             };
 
-            let str = format!("{:?}", bird_res).as_str().to_owned();
+            let str = format!("{:?}", bird_pointer).as_str().to_owned();
             Ok(str)
         });
 
