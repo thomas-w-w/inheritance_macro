@@ -106,7 +106,7 @@ pub async fn main_dragon() {
     let food_resource: Arc<Mutex<Food>> = Arc::new(Mutex::new(Food::new(
         "Food-1".to_string(),
         ObjType::Food,
-        50000,
+        100000,
     )));
 
     let mut fire_handle_and_dragon_vect: Vec<(
@@ -124,16 +124,16 @@ pub async fn main_dragon() {
         Arc<Mutex<Bird>>,
     )> = vec![];
 
-    let food_reserve: i32 = 50;
+    let food_reserve: i32 = 100;
     let maximum_speed: i32 = 10;
     let wing_span: i32 = 34;
     let number_of_claws: i32 = 4;
     let scale_colors: String = "red green yellow".to_string();
-    let fire_capacity: i32 = 100;
+    let fire_capacity: i32 = 0;
 
     println!("# ##  ###   ####  M A I N II dragons  #####    ####   ###  ## #");
 
-    for i in 2..5 {
+    for i in 2..50 {
         let id = format!("{}-{}", ObjType::Dragon, i);
 
         let dragon = create_dragon(
@@ -152,8 +152,6 @@ pub async fn main_dragon() {
 
         let fire_handle = thread::spawn(move || {
             loop {
-                println!("dragon loop: start");
-
                 let mut dragon_lock = dragon_clone.lock().unwrap();
 
                 let given_name = dragon_lock.get_given_name();
@@ -182,7 +180,7 @@ pub async fn main_dragon() {
 
     println!("# ##  ###   ####  M A I N III lizards  #####    ####   ###  ## #");
 
-    for i in 5..9 {
+    for i in 50..90 {
         let id = format!("{}-{}", ObjType::Lizard, i);
         let lizard = create_lizard(
             id.clone(),
@@ -197,8 +195,6 @@ pub async fn main_dragon() {
 
         let fire_handle = thread::spawn(move || {
             loop {
-                println!("lizard loop: start");
-
                 let mut lizard_lock = lizard_clone.lock().unwrap();
 
                 let given_name = lizard_lock.get_given_name();
@@ -229,7 +225,7 @@ pub async fn main_dragon() {
 
     println!("# ##  ###   ####  M A I N IV birds  #####    ####   ###  ## #");
 
-    for i in 9..13 {
+    for i in 90..130 {
         let id = format!("{}-{}", ObjType::Bird, i);
         let bird = create_bird(
             id.clone(),
@@ -244,8 +240,6 @@ pub async fn main_dragon() {
 
         let fly_handle = thread::spawn(move || {
             loop {
-                println!("bird loop: start");
-
                 let mut bird_lock = bird_clone.lock().unwrap();
 
                 let given_name = bird_lock.get_given_name();

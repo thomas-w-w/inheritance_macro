@@ -96,32 +96,23 @@ pub trait IAnimal: IObj {
     }
 
     fn eat(&mut self) -> bool {
-        let a = Arc::clone(&self.as_animal());
-        let b = a.lock();
-        let c = b.as_ref().unwrap();
-        let d = &c.shared_food;
-        let e = d.lock();
-        let food = e.unwrap();
+        let animal_pointer = &self.as_animal();
+        let animal_pointer_lock = animal_pointer.lock();
+        let animal_mtx = animal_pointer_lock.as_ref().unwrap();
+        let food_pointer = &animal_mtx.shared_food;
+        let food_pointer_lock = food_pointer.lock();
+        let mut food = food_pointer_lock.unwrap();
+
         let food_capacity = food.food_capacity.clone();
-        // prevent dead lock below
-        drop(food);
-        drop(b);
 
         if food_capacity >= 100 {
-            let a = Arc::clone(&self.as_animal());
-            let b = a.lock();
-            let c = b.as_ref().unwrap();
-            let d = &c.shared_food;
-            let e = d.lock();
-            let mut food = e.unwrap();
-
             food.food_capacity -= 100;
 
             let food_capacity = food.food_capacity.clone();
 
             //prevent dead lock
             drop(food);
-            drop(b);
+            drop(animal_pointer_lock);
 
             self.set_food_reserve(self.get_food_reserve() + 100);
 
@@ -133,11 +124,16 @@ pub trait IAnimal: IObj {
             );
 
             return true;
+        } else {
+            //prevent dead lock
+            drop(food);
+            drop(animal_pointer_lock);
+
+            println!(
+                "IAnimal::eat(): FAILED for {}, global food capacity less than 100.",
+                self.get_id()
+            );
         }
-        println!(
-            "IAnimal::eat(): FAILED for {}, global food capacity less than 100.",
-            self.get_id()
-        );
         false
     }
 }
