@@ -1,5 +1,6 @@
 mod async_threads_dragon;
 mod baseclass;
+mod bird_archetype;
 mod foo_bar_obj;
 mod foons;
 mod obj_fr_baseclass;
@@ -14,6 +15,8 @@ use foons::*;
 use obj_fr_baseclass::*;
 
 use futures::executor::block_on;
+
+use bird_archetype::*;
 
 fn test_dragon() {
     // make_foo!(Animal, IAnimal, (given_name: String));
@@ -62,7 +65,8 @@ fn main() {
     // // baseclass_main();
     // //obj_main();
     // //
-    block_on(main_dragon());
+    // // block_on(main_dragon());
+    bird_main();
 }
 
 //fn do_work_w_dragon(dragon: Dragon) {}
