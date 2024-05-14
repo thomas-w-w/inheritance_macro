@@ -1,44 +1,20 @@
+pub(crate) mod animal;
+
+use crate::dragon::bird::animal::obj::*;
+use animal::{AnimalArchetype, AnimalTrait};
+
 #[derive(Clone)]
-struct AnimalArchetype {
-    calories: u32,
-}
-
-impl AnimalArchetype {
-    fn eat(&mut self, calories: u32) {
-        self.calories += calories;
-    }
-}
-
-struct Animal {
-    animal: AnimalArchetype,
-}
-
-trait IAnimal {
-    fn eat(&mut self, calories: u32);
-}
-
-impl IAnimal for Animal {
-    fn eat(&mut self, calories: u32) {
-        self.animal.eat(calories);
-    }
-}
-
-trait IBird: IAnimal {
-    type Offspring;
-    fn peep(&self);
-    fn try_reproduce(&mut self) -> Option<Self::Offspring>;
-}
-
-struct BirdArchetype {
-    animal: AnimalArchetype,
-    eggs: u32,
+pub(crate) struct BirdArchetype {
+    pub(crate) animal: AnimalArchetype,
+    pub(crate) eggs: u32,
 }
 
 impl BirdArchetype {
-    fn peep(&self) {
+    pub(crate) fn peep(&self) {
         println!("BirdArchetype::peep");
     }
-    fn try_reproduce(&mut self) -> Option<BirdArchetype> {
+
+    pub(crate) fn try_reproduce(&mut self) -> Option<BirdArchetype> {
         if self.eggs > 0 {
             self.animal
                 .calories
@@ -57,6 +33,12 @@ impl BirdArchetype {
     }
 }
 
+pub(crate) trait BirdTrait: AnimalTrait {
+    // type Offspring;
+    fn peep(&self);
+    // fn try_reproduce(&mut self) -> Option<Self::Offspring>;
+}
+
 struct Bird {
     bird: BirdArchetype,
 }
@@ -67,20 +49,13 @@ impl Bird {
     }
 }
 
-impl IAnimal for Bird {
+impl ObjTrait for Bird {}
+
+impl AnimalTrait for Bird {
+    type Offspring = Bird;
     fn eat(&mut self, calories: u32) {
         self.bird.animal.eat(calories)
     }
-}
-
-impl IBird for Bird {
-    type Offspring = Bird;
-
-    fn peep(&self) {
-        println!("IBird for Bird::peep()");
-        self.bird.peep()
-    }
-
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
         self.bird
             .try_reproduce()
@@ -88,9 +63,21 @@ impl IBird for Bird {
     }
 }
 
+impl BirdTrait for Bird {
+    fn peep(&self) {
+        self.bird.peep()
+    }
+}
+
 pub fn bird_main() {
     let mut bird = Bird::new(BirdArchetype {
-        animal: AnimalArchetype { calories: 10 },
+        animal: AnimalArchetype {
+            obj: ObjArchetype {
+                obj_id: "1".to_string(),
+                obj_type: ObjType::Bird,
+            },
+            calories: 10,
+        },
         eggs: 3,
     });
     bird.peep();
@@ -102,7 +89,6 @@ pub fn bird_main() {
     }
 }
 
-fn birds_only(bird: &impl IBird) {
-    println!("birds_only::peep()");
+fn birds_only(bird: &impl BirdTrait) {
     bird.peep();
 }
