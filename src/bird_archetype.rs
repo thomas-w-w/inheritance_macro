@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Animal {
     calories: u32,
 }
@@ -14,11 +14,46 @@ impl IAnimal for Animal {
 }
 
 trait IBird: IAnimal {
-    type Offspring;
+    fn this(&mut self) -> &mut Bird;
+    fn eggs(&mut self) -> u32 {
+        self.this().bird.eggs
+    }
+    fn animal(&mut self) -> &mut Animal {
+        &mut self.this().animal
+    }
+    fn bird(&mut self) -> &mut BirdArchetype {
+        &mut self.this().bird
+    }
+
     fn peep(&self);
-    fn try_reproduce(&mut self) -> Option<Self::Offspring>;
+
+    fn try_reproduce(&mut self) -> Option<Bird> {
+        self.try_reproduce_mf().map(|bird| Bird {
+            animal: self.this().animal().clone(),
+            bird: bird,
+        })
+    }
+
+    fn try_reproduce_mf(&mut self) -> Option<BirdArchetype> {
+        if self.this().bird.eggs > 0 {
+            self.this()
+                .animal()
+                .calories
+                .checked_sub(50)
+                .map(|remaining_calories| {
+                    self.this().animal().calories = remaining_calories;
+                    self.this().bird.eggs -= 1;
+                    BirdArchetype {
+                        eggs: self.this().bird.eggs,
+                    }
+                })
+        } else {
+            None
+        }
+    }
 }
 
+#[derive(Debug, Clone)]
 struct BirdArchetype {
     eggs: u32,
 }
@@ -27,19 +62,8 @@ impl BirdArchetype {
     fn peep(&self) {
         println!("BirdArchetype::peep");
     }
-    fn try_reproduce(&mut self, animal: &mut Animal) -> Option<BirdArchetype> {
-        if self.eggs > 0 {
-            animal.calories.checked_sub(50).map(|remaining_calories| {
-                animal.calories = remaining_calories;
-                self.eggs -= 1;
-                BirdArchetype { eggs: self.eggs }
-            })
-        } else {
-            None
-        }
-    }
 }
-
+#[derive(Debug, Clone)]
 struct Bird {
     animal: Animal,
     bird: BirdArchetype,
@@ -56,22 +80,14 @@ impl IAnimal for Bird {
         self.animal.eat(calories)
     }
 }
-
 impl IBird for Bird {
-    type Offspring = Bird;
+    fn this(&mut self) -> &mut Bird {
+        self
+    }
 
     fn peep(&self) {
         println!("IBird for Bird::peep()");
         self.bird.peep()
-    }
-
-    fn try_reproduce(&mut self) -> Option<Self::Offspring> {
-        self.bird
-            .try_reproduce(&mut self.animal)
-            .map(|bird| Self::Offspring {
-                animal: self.animal.clone(),
-                bird,
-            })
     }
 }
 
