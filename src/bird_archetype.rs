@@ -1,6 +1,16 @@
 #[derive(Clone)]
-struct Animal {
+struct AnimalArchetype {
     calories: u32,
+}
+
+impl AnimalArchetype {
+    fn eat(&mut self, calories: u32) {
+        self.calories += calories;
+    }
+}
+
+struct Animal {
+    animal: AnimalArchetype,
 }
 
 trait IAnimal {
@@ -9,7 +19,7 @@ trait IAnimal {
 
 impl IAnimal for Animal {
     fn eat(&mut self, calories: u32) {
-        self.calories += calories;
+        self.animal.eat(calories);
     }
 }
 
@@ -20,7 +30,7 @@ trait IBird: IAnimal {
 }
 
 struct BirdArchetype {
-    animal: Animal,
+    animal: AnimalArchetype,
     eggs: u32,
 }
 
@@ -80,7 +90,7 @@ impl IBird for Bird {
 
 pub fn bird_main() {
     let mut bird = Bird::new(BirdArchetype {
-        animal: Animal { calories: 10 },
+        animal: AnimalArchetype { calories: 10 },
         eggs: 3,
     });
     bird.peep();
