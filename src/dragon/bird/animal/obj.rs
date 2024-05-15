@@ -33,6 +33,8 @@ impl ObjArchetype {}
 
 pub(crate) trait ObjTrait {}
 
-struct Obj {}
+struct Obj {
+    obj: ObjArchetype,
+}
 
 impl ObjTrait for Obj {}

@@ -11,28 +11,27 @@ use lizard::LizardArchetype;
 use lizard::LizardTrait;
 
 struct DragonArchetype {
-    bird: BirdArchetype,
-    lizard: LizardArchetype,
+    etanol_liters: u32,
 }
 
 impl DragonArchetype {
     fn fire(&self) {
         println!("DragonArchetype::fire");
     }
-    fn try_reproduce(&mut self) -> Option<DragonArchetype> {
-        if self.bird.eggs > 0 {
-            self.bird
-                .animal
-                .calories
-                .checked_sub(50)
-                .map(|remaining_calories| {
-                    self.bird.animal.calories = remaining_calories;
-                    self.bird.eggs -= 1;
-                    DragonArchetype {
-                        bird: self.bird.clone(),
-                        lizard: self.lizard.clone(),
-                    }
-                })
+    fn try_reproduce(
+        &mut self,
+        bird: &mut BirdArchetype,
+        lizard: &mut LizardArchetype,
+        animal: &mut AnimalArchetype,
+    ) -> Option<DragonArchetype> {
+        if bird.eggs > 0 {
+            animal.calories.checked_sub(50).map(|remaining_calories| {
+                animal.calories = remaining_calories;
+                bird.eggs -= 1;
+                DragonArchetype {
+                    etanol_liters: self.etanol_liters.clone(),
+                }
+            })
         } else {
             None
         }
@@ -40,17 +39,32 @@ impl DragonArchetype {
 }
 
 trait DragonTrait: BirdTrait + LizardTrait {
-    // fn try_reproduce(&mut self) -> Option<Dragon>;
     fn fire(&self);
 }
 
 struct Dragon {
     dragon: DragonArchetype,
+    bird: BirdArchetype,
+    lizard: LizardArchetype,
+    animal: AnimalArchetype,
+    obj: ObjArchetype,
 }
 
 impl Dragon {
-    pub fn new(dragon: DragonArchetype) -> Self {
-        Self { dragon }
+    pub fn new(
+        dragon: DragonArchetype,
+        bird: BirdArchetype,
+        lizard: LizardArchetype,
+        animal: AnimalArchetype,
+        obj: ObjArchetype,
+    ) -> Self {
+        Self {
+            dragon,
+            bird,
+            lizard,
+            animal,
+            obj,
+        }
     }
 }
 
@@ -59,24 +73,31 @@ impl ObjTrait for Dragon {}
 impl AnimalTrait for Dragon {
     type Offspring = Dragon;
     fn eat(&mut self, calories: u32) {
-        self.dragon.bird.animal.eat(calories)
+        self.animal.eat(calories)
     }
+
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
         self.dragon
-            .try_reproduce()
-            .map(|dragon: DragonArchetype| Self::Offspring { dragon })
+            .try_reproduce(&mut self.bird, &mut self.lizard, &mut self.animal)
+            .map(|dragon: DragonArchetype| Self::Offspring {
+                dragon,
+                bird: self.bird.clone(),
+                lizard: self.lizard.clone(),
+                animal: self.animal.clone(),
+                obj: self.obj.clone(),
+            })
     }
 }
 
 impl BirdTrait for Dragon {
     fn peep(&self) {
-        self.dragon.bird.peep()
+        self.bird.peep()
     }
 }
 
 impl LizardTrait for Dragon {
     fn crawl(&self) {
-        self.dragon.lizard.crawl();
+        self.lizard.crawl();
     }
 }
 
@@ -87,28 +108,18 @@ impl DragonTrait for Dragon {
 }
 
 pub fn dragon_main() {
-    let mut dragon = Dragon::new(DragonArchetype {
-        bird: BirdArchetype {
-            animal: AnimalArchetype {
-                obj: ObjArchetype {
-                    obj_id: "1".to_string(),
-                    obj_type: ObjType::Dragon,
-                },
-                calories: 10,
-            },
-            eggs: 3,
+    let mut dragon = Dragon::new(
+        DragonArchetype {
+            etanol_liters: 1000,
         },
-        lizard: LizardArchetype {
-            animal: AnimalArchetype {
-                obj: ObjArchetype {
-                    obj_id: "1".to_string(),
-                    obj_type: ObjType::Dragon,
-                },
-                calories: 10,
-            },
-            eggs: 3,
+        BirdArchetype { eggs: 3 },
+        LizardArchetype { eggs: 3 },
+        AnimalArchetype { calories: 10 },
+        ObjArchetype {
+            obj_id: "dragon#1".to_string(),
+            obj_type: ObjType::Dragon,
         },
-    });
+    );
     dragon.fire();
     dragon.eat(50);
     dragon.peep();

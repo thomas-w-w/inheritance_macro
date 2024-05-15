@@ -4,7 +4,6 @@ use obj::{ObjArchetype, ObjTrait};
 
 #[derive(Clone)]
 pub(crate) struct AnimalArchetype {
-    pub(crate) obj: ObjArchetype,
     pub(crate) calories: u32,
 }
 
@@ -22,6 +21,7 @@ pub(crate) trait AnimalTrait: ObjTrait {
 
 struct Animal {
     animal: AnimalArchetype,
+    obj: ObjArchetype,
 }
 
 impl ObjTrait for Animal {}
@@ -34,6 +34,6 @@ impl AnimalTrait for Animal {
     type Offspring = Animal;
 
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
-        todo!()
+        panic!("Not implemented");
     }
 }

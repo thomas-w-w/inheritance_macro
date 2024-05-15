@@ -5,7 +5,6 @@ use animal::{AnimalArchetype, AnimalTrait};
 
 #[derive(Clone)]
 pub(crate) struct BirdArchetype {
-    pub(crate) animal: AnimalArchetype,
     pub(crate) eggs: u32,
 }
 
@@ -14,19 +13,13 @@ impl BirdArchetype {
         println!("BirdArchetype::peep");
     }
 
-    pub(crate) fn try_reproduce(&mut self) -> Option<BirdArchetype> {
+    pub(crate) fn try_reproduce(&mut self, animal: &mut AnimalArchetype) -> Option<BirdArchetype> {
         if self.eggs > 0 {
-            self.animal
-                .calories
-                .checked_sub(50)
-                .map(|remaining_calories| {
-                    self.animal.calories = remaining_calories;
-                    self.eggs -= 1;
-                    BirdArchetype {
-                        animal: self.animal.clone(),
-                        eggs: self.eggs,
-                    }
-                })
+            animal.calories.checked_sub(50).map(|remaining_calories| {
+                animal.calories = remaining_calories;
+                self.eggs -= 1;
+                BirdArchetype { eggs: self.eggs }
+            })
         } else {
             None
         }
@@ -34,18 +27,18 @@ impl BirdArchetype {
 }
 
 pub(crate) trait BirdTrait: AnimalTrait {
-    // type Offspring;
     fn peep(&self);
-    // fn try_reproduce(&mut self) -> Option<Self::Offspring>;
 }
 
 struct Bird {
     bird: BirdArchetype,
+    animal: AnimalArchetype,
+    obj: ObjArchetype,
 }
 
 impl Bird {
-    pub fn new(bird: BirdArchetype) -> Self {
-        Self { bird }
+    pub fn new(bird: BirdArchetype, animal: AnimalArchetype, obj: ObjArchetype) -> Self {
+        Self { bird, animal, obj }
     }
 }
 
@@ -54,12 +47,16 @@ impl ObjTrait for Bird {}
 impl AnimalTrait for Bird {
     type Offspring = Bird;
     fn eat(&mut self, calories: u32) {
-        self.bird.animal.eat(calories)
+        self.animal.eat(calories)
     }
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
         self.bird
-            .try_reproduce()
-            .map(|bird| Self::Offspring { bird })
+            .try_reproduce(&mut self.animal)
+            .map(|bird| Self::Offspring {
+                bird: bird,
+                animal: self.animal.clone(),
+                obj: self.obj.clone(),
+            })
     }
 }
 
@@ -70,16 +67,14 @@ impl BirdTrait for Bird {
 }
 
 pub fn bird_main() {
-    let mut bird = Bird::new(BirdArchetype {
-        animal: AnimalArchetype {
-            obj: ObjArchetype {
-                obj_id: "1".to_string(),
-                obj_type: ObjType::Bird,
-            },
-            calories: 10,
+    let mut bird = Bird::new(
+        BirdArchetype { eggs: 3 },
+        AnimalArchetype { calories: 10 },
+        ObjArchetype {
+            obj_id: "bird#1".to_string(),
+            obj_type: ObjType::Bird,
         },
-        eggs: 3,
-    });
+    );
     bird.peep();
     bird.eat(50);
     if let Some(mut new_bird) = bird.try_reproduce() {
