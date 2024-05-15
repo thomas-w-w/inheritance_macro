@@ -1,13 +1,13 @@
 pub(crate) mod obj;
 
-use obj::{ObjArchetype, ObjTrait};
+use obj::{ObjComponent, ObjTrait};
 
 #[derive(Clone)]
-pub(crate) struct AnimalArchetype {
+pub(crate) struct AnimalComponent {
     pub(crate) calories: u32,
 }
 
-impl AnimalArchetype {
+impl AnimalComponent {
     pub(crate) fn eat(&mut self, calories: u32) {
         self.calories += calories;
     }
@@ -19,21 +19,7 @@ pub(crate) trait AnimalTrait: ObjTrait {
     fn try_reproduce(&mut self) -> Option<Self::Offspring>;
 }
 
-struct Animal {
-    animal: AnimalArchetype,
-    obj: ObjArchetype,
-}
-
-impl ObjTrait for Animal {}
-
-impl AnimalTrait for Animal {
-    fn eat(&mut self, calories: u32) {
-        self.animal.eat(calories);
-    }
-
-    type Offspring = Animal;
-
-    fn try_reproduce(&mut self) -> Option<Self::Offspring> {
-        panic!("Not implemented");
-    }
+struct AnimalArchetype {
+    animal: AnimalComponent,
+    obj: ObjComponent,
 }

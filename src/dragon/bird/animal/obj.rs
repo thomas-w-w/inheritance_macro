@@ -24,17 +24,11 @@ impl Display for ObjType {
 }
 
 #[derive(Clone)]
-pub(crate) struct ObjArchetype {
+pub(crate) struct ObjComponent {
     pub(crate) obj_id: String,
     pub(crate) obj_type: ObjType,
 }
 
-impl ObjArchetype {}
+impl ObjComponent {}
 
 pub(crate) trait ObjTrait {}
-
-struct Obj {
-    obj: ObjArchetype,
-}
-
-impl ObjTrait for Obj {}

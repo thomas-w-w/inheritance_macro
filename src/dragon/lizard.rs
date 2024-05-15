@@ -2,24 +2,24 @@ use crate::dragon::bird::animal::obj::*;
 use crate::dragon::bird::animal::*;
 
 #[derive(Clone)]
-pub(crate) struct LizardArchetype {
+pub(crate) struct LizardComponent {
     pub(crate) eggs: u32,
 }
 
-impl LizardArchetype {
+impl LizardComponent {
     pub(crate) fn crawl(&self) {
         println!("LizardArchetype::crawl");
     }
 
     pub(crate) fn try_reproduce(
         &mut self,
-        animal: &mut AnimalArchetype,
-    ) -> Option<LizardArchetype> {
+        animal: &mut AnimalComponent,
+    ) -> Option<LizardComponent> {
         if self.eggs > 0 {
             animal.calories.checked_sub(50).map(|remaining_calories| {
                 animal.calories = remaining_calories;
                 self.eggs -= 1;
-                LizardArchetype { eggs: self.eggs }
+                LizardComponent { eggs: self.eggs }
             })
         } else {
             None
@@ -31,14 +31,14 @@ pub(crate) trait LizardTrait: AnimalTrait {
     fn crawl(&self);
 }
 
-struct Lizard {
-    lizard: LizardArchetype,
-    animal: AnimalArchetype,
-    obj: ObjArchetype,
+struct LizardArchetype {
+    lizard: LizardComponent,
+    animal: AnimalComponent,
+    obj: ObjComponent,
 }
 
-impl Lizard {
-    pub fn new(lizard: LizardArchetype, animal: AnimalArchetype, obj: ObjArchetype) -> Self {
+impl LizardArchetype {
+    pub fn new(lizard: LizardComponent, animal: AnimalComponent, obj: ObjComponent) -> Self {
         Self {
             lizard,
             animal,
@@ -47,10 +47,10 @@ impl Lizard {
     }
 }
 
-impl ObjTrait for Lizard {}
+impl ObjTrait for LizardArchetype {}
 
-impl AnimalTrait for Lizard {
-    type Offspring = Lizard;
+impl AnimalTrait for LizardArchetype {
+    type Offspring = LizardArchetype;
     fn eat(&mut self, calories: u32) {
         self.animal.eat(calories)
     }
@@ -65,17 +65,17 @@ impl AnimalTrait for Lizard {
     }
 }
 
-impl LizardTrait for Lizard {
+impl LizardTrait for LizardArchetype {
     fn crawl(&self) {
         self.lizard.crawl()
     }
 }
 
 pub fn lizard_main() {
-    let mut lizard = Lizard::new(
-        LizardArchetype { eggs: 3 },
-        AnimalArchetype { calories: 10 },
-        ObjArchetype {
+    let mut lizard = LizardArchetype::new(
+        LizardComponent { eggs: 3 },
+        AnimalComponent { calories: 10 },
+        ObjComponent {
             obj_id: "lizard#1".to_string(),
             obj_type: ObjType::Lizard,
         },

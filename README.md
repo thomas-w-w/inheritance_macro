@@ -84,3 +84,18 @@ fn main() {
 /// maybe delete/keep
 //// DO DELETE
 ///// DO KEEP
+
+
+ChronosWS — Idag 17:16
+A couple items:
+https://en.wikipedia.org/wiki/Entity_component_system
+https://t-machine.org/index.php/2007/11/11/entity-systems-are-the-future-of-mmog-development-part-2/
+Entity component system
+Entity component system (ECS) is a software architectural pattern mostly used in video game development for the representation of game world objects. An ECS comprises entities composed from components of data, with systems which operate on the components.
+ECS follows the principle of composition over inheritance, meaning that every entity is def...
+Entity component system
+The Bevy book also talks about it: https://bevy-cheatbook.github.io/programming/ecs-intro.html
+Intro to ECS - Unofficial Bevy Cheat Book
+All of these are game-oriented.
+So I would look at them for ideas about how to separate data and logic, not necessarily that you should or must use this particular paragidm.  It'll give you ideas though
+You can also look at Data-oriented Design, or Data-oriented Programming.

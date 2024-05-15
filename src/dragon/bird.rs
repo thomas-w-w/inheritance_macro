@@ -1,24 +1,24 @@
 pub(crate) mod animal;
 
 use crate::dragon::bird::animal::obj::*;
-use animal::{AnimalArchetype, AnimalTrait};
+use animal::{AnimalComponent, AnimalTrait};
 
 #[derive(Clone)]
-pub(crate) struct BirdArchetype {
+pub(crate) struct BirdComponent {
     pub(crate) eggs: u32,
 }
 
-impl BirdArchetype {
+impl BirdComponent {
     pub(crate) fn peep(&self) {
         println!("BirdArchetype::peep");
     }
 
-    pub(crate) fn try_reproduce(&mut self, animal: &mut AnimalArchetype) -> Option<BirdArchetype> {
+    pub(crate) fn try_reproduce(&mut self, animal: &mut AnimalComponent) -> Option<BirdComponent> {
         if self.eggs > 0 {
             animal.calories.checked_sub(50).map(|remaining_calories| {
                 animal.calories = remaining_calories;
                 self.eggs -= 1;
-                BirdArchetype { eggs: self.eggs }
+                BirdComponent { eggs: self.eggs }
             })
         } else {
             None
@@ -30,22 +30,22 @@ pub(crate) trait BirdTrait: AnimalTrait {
     fn peep(&self);
 }
 
-struct Bird {
-    bird: BirdArchetype,
-    animal: AnimalArchetype,
-    obj: ObjArchetype,
+struct BirdArchetype {
+    bird: BirdComponent,
+    animal: AnimalComponent,
+    obj: ObjComponent,
 }
 
-impl Bird {
-    pub fn new(bird: BirdArchetype, animal: AnimalArchetype, obj: ObjArchetype) -> Self {
+impl BirdArchetype {
+    pub fn new(bird: BirdComponent, animal: AnimalComponent, obj: ObjComponent) -> Self {
         Self { bird, animal, obj }
     }
 }
 
-impl ObjTrait for Bird {}
+impl ObjTrait for BirdArchetype {}
 
-impl AnimalTrait for Bird {
-    type Offspring = Bird;
+impl AnimalTrait for BirdArchetype {
+    type Offspring = BirdArchetype;
     fn eat(&mut self, calories: u32) {
         self.animal.eat(calories)
     }
@@ -60,17 +60,17 @@ impl AnimalTrait for Bird {
     }
 }
 
-impl BirdTrait for Bird {
+impl BirdTrait for BirdArchetype {
     fn peep(&self) {
         self.bird.peep()
     }
 }
 
 pub fn bird_main() {
-    let mut bird = Bird::new(
-        BirdArchetype { eggs: 3 },
-        AnimalArchetype { calories: 10 },
-        ObjArchetype {
+    let mut bird = BirdArchetype::new(
+        BirdComponent { eggs: 3 },
+        AnimalComponent { calories: 10 },
+        ObjComponent {
             obj_id: "bird#1".to_string(),
             obj_type: ObjType::Bird,
         },
