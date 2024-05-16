@@ -7,9 +7,7 @@ use crate::{dragon::bird::animal::obj::*, egg_laying_animal::INIT_EGGS};
 use egg_laying_animal::{EggLayingAnimalComponent, EggLayingAnimalTrait};
 
 #[derive(Clone, Debug)]
-pub(crate) struct BirdComponent {
-    //    pub(crate) eggs: u32,
-}
+pub(crate) struct BirdComponent {}
 impl BirdComponent {
     pub(crate) fn peep(&self) {
         println!("BirdArchetype::peep");

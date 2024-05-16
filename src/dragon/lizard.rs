@@ -27,7 +27,7 @@ impl LizardComponent {
     }
 }
 
-pub(crate) trait LizardTrait: AnimalTrait {
+pub(crate) trait LizardTrait: EggLayingAnimalTrait {
     fn crawl(&self);
 }
 
@@ -77,6 +77,8 @@ impl AnimalTrait for LizardArchetype {
             })
     }
 }
+
+impl EggLayingAnimalTrait for LizardArchetype {}
 
 impl LizardTrait for LizardArchetype {
     fn crawl(&self) {
