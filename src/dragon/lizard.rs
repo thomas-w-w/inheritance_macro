@@ -1,10 +1,9 @@
 use crate::dragon::bird::animal::obj::*;
 use crate::dragon::bird::animal::*;
+use crate::egg_laying_animal::{EggLayingAnimalComponent, EggLayingAnimalTrait, INIT_EGGS};
 
 #[derive(Clone, Debug)]
-pub(crate) struct LizardComponent {
-    pub(crate) eggs: u32,
-}
+pub(crate) struct LizardComponent {}
 
 impl LizardComponent {
     pub(crate) fn crawl(&self) {
@@ -13,13 +12,14 @@ impl LizardComponent {
 
     pub(crate) fn try_reproduce(
         &mut self,
+        egg_laying_animal: &mut EggLayingAnimalComponent,
         animal: &mut AnimalComponent,
     ) -> Option<LizardComponent> {
-        if self.eggs > 0 {
+        if egg_laying_animal.eggs > 0 {
             animal.calories.checked_sub(50).map(|remaining_calories| {
                 animal.calories = remaining_calories;
-                self.eggs -= 1;
-                LizardComponent { eggs: self.eggs }
+                egg_laying_animal.eggs -= 1;
+                LizardComponent {}
             })
         } else {
             None
@@ -34,14 +34,21 @@ pub(crate) trait LizardTrait: AnimalTrait {
 #[derive(Debug)]
 struct LizardArchetype {
     lizard: LizardComponent,
+    egg_laying_animal: EggLayingAnimalComponent,
     animal: AnimalComponent,
     obj: ObjComponent,
 }
 
 impl LizardArchetype {
-    pub fn new(lizard: LizardComponent, animal: AnimalComponent, obj: ObjComponent) -> Self {
+    pub fn new(
+        lizard: LizardComponent,
+        egg_laying_animal: EggLayingAnimalComponent,
+        animal: AnimalComponent,
+        obj: ObjComponent,
+    ) -> Self {
         Self {
             lizard,
+            egg_laying_animal,
             animal,
             obj,
         }
@@ -57,9 +64,10 @@ impl AnimalTrait for LizardArchetype {
     }
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
         self.lizard
-            .try_reproduce(&mut self.animal)
+            .try_reproduce(&mut self.egg_laying_animal, &mut self.animal)
             .map(|lizard| Self::Offspring {
                 lizard: lizard,
+                egg_laying_animal: EggLayingAnimalComponent { eggs: INIT_EGGS },
                 animal: self.animal.clone(),
                 obj: ObjComponent {
                     obj_id: ObjComponent::new_id(),
@@ -78,7 +86,8 @@ impl LizardTrait for LizardArchetype {
 
 pub fn lizard_main() {
     let mut lizard = LizardArchetype::new(
-        LizardComponent { eggs: 3 },
+        LizardComponent {},
+        EggLayingAnimalComponent { eggs: INIT_EGGS },
         AnimalComponent { calories: 10 },
         ObjComponent {
             obj_id: ObjComponent::new_id(),

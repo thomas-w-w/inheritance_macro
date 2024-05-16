@@ -3,6 +3,9 @@ pub(crate) mod lizard;
 
 use crate::dragon::bird::animal::obj::*;
 use crate::dragon::bird::animal::*;
+use crate::egg_laying_animal::EggLayingAnimalComponent;
+use crate::egg_laying_animal::EggLayingAnimalTrait;
+use crate::egg_laying_animal::INIT_EGGS;
 
 use bird::BirdComponent;
 use bird::BirdTrait;
@@ -21,14 +24,13 @@ impl DragonComponent {
     }
     fn try_reproduce(
         &mut self,
-        bird: &mut BirdComponent,
-        lizard: &mut LizardComponent,
+        egg_laying_animal: &mut EggLayingAnimalComponent,
         animal: &mut AnimalComponent,
     ) -> Option<DragonComponent> {
-        if bird.eggs > 0 {
+        if egg_laying_animal.eggs > 0 {
             animal.calories.checked_sub(50).map(|remaining_calories| {
                 animal.calories = remaining_calories;
-                bird.eggs -= 1;
+                egg_laying_animal.eggs -= 1;
                 DragonComponent {
                     etanol_liters: self.etanol_liters.clone(),
                 }
@@ -48,6 +50,7 @@ struct DragonArchetype {
     dragon: DragonComponent,
     bird: BirdComponent,
     lizard: LizardComponent,
+    egg_laying_animal: EggLayingAnimalComponent,
     animal: AnimalComponent,
     obj: ObjComponent,
 }
@@ -57,6 +60,7 @@ impl DragonArchetype {
         dragon: DragonComponent,
         bird: BirdComponent,
         lizard: LizardComponent,
+        egg_laying_animal: EggLayingAnimalComponent,
         animal: AnimalComponent,
         obj: ObjComponent,
     ) -> Self {
@@ -64,6 +68,7 @@ impl DragonArchetype {
             dragon,
             bird,
             lizard,
+            egg_laying_animal,
             animal,
             obj,
         }
@@ -80,11 +85,12 @@ impl AnimalTrait for DragonArchetype {
 
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
         self.dragon
-            .try_reproduce(&mut self.bird, &mut self.lizard, &mut self.animal)
+            .try_reproduce(&mut self.egg_laying_animal, &mut self.animal)
             .map(|dragon: DragonComponent| Self::Offspring {
                 dragon,
                 bird: self.bird.clone(),
                 lizard: self.lizard.clone(),
+                egg_laying_animal: self.egg_laying_animal.clone(),
                 animal: self.animal.clone(),
                 obj: ObjComponent {
                     obj_id: ObjComponent::new_id(),
@@ -94,6 +100,8 @@ impl AnimalTrait for DragonArchetype {
             })
     }
 }
+
+impl EggLayingAnimalTrait for DragonArchetype {}
 
 impl BirdTrait for DragonArchetype {
     fn peep(&self) {
@@ -118,8 +126,9 @@ pub fn dragon_main() {
         DragonComponent {
             etanol_liters: 1000,
         },
-        BirdComponent { eggs: 3 },
-        LizardComponent { eggs: 3 },
+        BirdComponent {},
+        LizardComponent {},
+        EggLayingAnimalComponent { eggs: INIT_EGGS },
         AnimalComponent { calories: 10 },
         ObjComponent {
             obj_id: ObjComponent::new_id(),
@@ -153,25 +162,16 @@ pub fn dragon_main() {
                         new_new_new_new_dragon
                     );
                 } else {
-                    println!(
-                        "\r\nFail reproduce dragon {}",
-                        new_new_new_dragon.obj.obj_id.clone()
-                    );
+                    println!("\r\nFail reproduce dragon {:?}", new_new_new_dragon);
                 }
             } else {
-                println!(
-                    "\r\nFail reproduce dragon {}",
-                    new_new_dragon.obj.obj_id.clone()
-                );
+                println!("\r\nFail reproduce dragon {:?}", new_new_dragon);
             }
         } else {
-            println!(
-                "\r\nFail reproduce dragon {}",
-                new_dragon.obj.obj_id.clone()
-            );
+            println!("\r\nFail reproduce dragon {:?}", new_dragon);
         }
     } else {
-        println!("\r\nFail reproduce dragon {}", dragon.obj.obj_id.clone());
+        println!("\r\nFail reproduce dragon {:?}", dragon);
     }
 }
 
