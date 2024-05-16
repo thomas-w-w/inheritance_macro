@@ -3,11 +3,10 @@ pub(crate) mod animal;
 use crate::dragon::bird::animal::obj::*;
 use animal::{AnimalComponent, AnimalTrait};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct BirdComponent {
     pub(crate) eggs: u32,
 }
-
 impl BirdComponent {
     pub(crate) fn peep(&self) {
         println!("BirdArchetype::peep");
@@ -30,6 +29,7 @@ pub(crate) trait BirdTrait: AnimalTrait {
     fn peep(&self);
 }
 
+#[derive(Debug)]
 struct BirdArchetype {
     bird: BirdComponent,
     animal: AnimalComponent,
@@ -55,7 +55,11 @@ impl AnimalTrait for BirdArchetype {
             .map(|bird| Self::Offspring {
                 bird: bird,
                 animal: self.animal.clone(),
-                obj: self.obj.clone(),
+                obj: ObjComponent {
+                    obj_id: ObjComponent::new_id(),
+                    parent_id: Some(self.obj.obj_id.clone()),
+                    obj_type: ObjType::Bird,
+                },
             })
     }
 }
@@ -71,16 +75,19 @@ pub fn bird_main() {
         BirdComponent { eggs: 3 },
         AnimalComponent { calories: 10 },
         ObjComponent {
-            obj_id: "bird#1".to_string(),
+            obj_id: ObjComponent::new_id(),
+            parent_id: None,
             obj_type: ObjType::Bird,
         },
     );
     bird.peep();
     bird.eat(50);
+    birds_only(&bird);
+    println!("\r\nBird: {:?}", bird);
     if let Some(mut new_bird) = bird.try_reproduce() {
-        birds_only(&bird);
         birds_only(&new_bird);
         new_bird.eat(50);
+        println!("\r\nChild bird: {:?}", new_bird);
     }
 }
 

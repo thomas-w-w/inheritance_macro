@@ -10,6 +10,7 @@ use bird::BirdTrait;
 use lizard::LizardComponent;
 use lizard::LizardTrait;
 
+#[derive(Debug)]
 struct DragonComponent {
     etanol_liters: u32,
 }
@@ -42,6 +43,7 @@ trait DragonTrait: BirdTrait + LizardTrait {
     fn fire(&self);
 }
 
+#[derive(Debug)]
 struct DragonArchetype {
     dragon: DragonComponent,
     bird: BirdComponent,
@@ -84,7 +86,11 @@ impl AnimalTrait for DragonArchetype {
                 bird: self.bird.clone(),
                 lizard: self.lizard.clone(),
                 animal: self.animal.clone(),
-                obj: self.obj.clone(),
+                obj: ObjComponent {
+                    obj_id: ObjComponent::new_id(),
+                    parent_id: Some(self.obj.obj_id.clone()),
+                    obj_type: ObjType::Dragon,
+                },
             })
     }
 }
@@ -116,7 +122,8 @@ pub fn dragon_main() {
         LizardComponent { eggs: 3 },
         AnimalComponent { calories: 10 },
         ObjComponent {
-            obj_id: "dragon#1".to_string(),
+            obj_id: ObjComponent::new_id(),
+            parent_id: None,
             obj_type: ObjType::Dragon,
         },
     );
@@ -124,10 +131,47 @@ pub fn dragon_main() {
     dragon.eat(50);
     dragon.peep();
     dragon.crawl();
+    println!("\r\nDragon: {:?}", dragon);
+    dragons_only(&dragon);
     if let Some(mut new_dragon) = dragon.try_reproduce() {
-        dragons_only(&dragon);
-        dragons_only(&new_dragon);
         new_dragon.eat(50);
+        println!("\r\nChild dragon: {:?}", new_dragon);
+        dragons_only(&new_dragon);
+        if let Some(mut new_new_dragon) = new_dragon.try_reproduce() {
+            new_new_dragon.eat(50);
+            dragons_only(&new_dragon);
+            println!("\r\nChild dragon: {:?}", new_dragon);
+            if let Some(mut new_new_new_dragon) = new_new_dragon.try_reproduce() {
+                new_new_dragon.eat(50);
+                dragons_only(&new_new_new_dragon);
+                println!("\r\nGrand grand child dragon: {:?}", new_new_new_dragon);
+                if let Some(mut new_new_new_new_dragon) = new_new_new_dragon.try_reproduce() {
+                    new_new_new_new_dragon.eat(50);
+                    dragons_only(&new_new_new_new_dragon);
+                    println!(
+                        "\r\nGrand grand grand child dragon: {:?}",
+                        new_new_new_new_dragon
+                    );
+                } else {
+                    println!(
+                        "\r\nFail reproduce dragon {}",
+                        new_new_new_dragon.obj.obj_id.clone()
+                    );
+                }
+            } else {
+                println!(
+                    "\r\nFail reproduce dragon {}",
+                    new_new_dragon.obj.obj_id.clone()
+                );
+            }
+        } else {
+            println!(
+                "\r\nFail reproduce dragon {}",
+                new_dragon.obj.obj_id.clone()
+            );
+        }
+    } else {
+        println!("\r\nFail reproduce dragon {}", dragon.obj.obj_id.clone());
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::dragon::bird::animal::obj::*;
 use crate::dragon::bird::animal::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct LizardComponent {
     pub(crate) eggs: u32,
 }
@@ -31,6 +31,7 @@ pub(crate) trait LizardTrait: AnimalTrait {
     fn crawl(&self);
 }
 
+#[derive(Debug)]
 struct LizardArchetype {
     lizard: LizardComponent,
     animal: AnimalComponent,
@@ -60,7 +61,11 @@ impl AnimalTrait for LizardArchetype {
             .map(|lizard| Self::Offspring {
                 lizard: lizard,
                 animal: self.animal.clone(),
-                obj: self.obj.clone(),
+                obj: ObjComponent {
+                    obj_id: ObjComponent::new_id(),
+                    parent_id: Some(self.obj.obj_id.clone()),
+                    obj_type: ObjType::Lizard,
+                },
             })
     }
 }
@@ -76,16 +81,19 @@ pub fn lizard_main() {
         LizardComponent { eggs: 3 },
         AnimalComponent { calories: 10 },
         ObjComponent {
-            obj_id: "lizard#1".to_string(),
+            obj_id: ObjComponent::new_id(),
+            parent_id: None,
             obj_type: ObjType::Lizard,
         },
     );
     lizard.crawl();
     lizard.eat(50);
+    lizards_only(&lizard);
+    println!("\r\nLizard: {:?}", lizard);
     if let Some(mut new_lizard) = lizard.try_reproduce() {
-        lizards_only(&lizard);
-        lizards_only(&new_lizard);
         new_lizard.eat(50);
+        lizards_only(&new_lizard);
+        println!("\r\nChild lizard: {:?}", new_lizard);
     }
 }
 

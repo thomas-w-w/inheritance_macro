@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum ObjType {
@@ -23,12 +24,17 @@ impl Display for ObjType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct ObjComponent {
     pub(crate) obj_id: String,
+    pub(crate) parent_id: Option<String>,
     pub(crate) obj_type: ObjType,
 }
 
-impl ObjComponent {}
+impl ObjComponent {
+    pub(crate) fn new_id() -> String {
+        format!("{}", Uuid::new_v4())
+    }
+}
 
 pub(crate) trait ObjTrait {}
