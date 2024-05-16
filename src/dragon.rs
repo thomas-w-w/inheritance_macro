@@ -90,7 +90,7 @@ impl AnimalTrait for DragonArchetype {
                 dragon,
                 bird: self.bird.clone(),
                 lizard: self.lizard.clone(),
-                egg_laying_animal: self.egg_laying_animal.clone(),
+                egg_laying_animal: EggLayingAnimalComponent { eggs: INIT_EGGS },
                 animal: self.animal.clone(),
                 obj: ObjComponent {
                     obj_id: ObjComponent::new_id(),
