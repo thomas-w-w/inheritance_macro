@@ -9,22 +9,6 @@ impl LizardComponent {
     pub(crate) fn crawl(&self) {
         println!("LizardArchetype::crawl");
     }
-
-    pub(crate) fn try_reproduce(
-        &mut self,
-        egg_laying_animal: &mut EggLayingAnimalComponent,
-        animal: &mut AnimalComponent,
-    ) -> Option<LizardComponent> {
-        if egg_laying_animal.eggs > 0 {
-            animal.calories.checked_sub(50).map(|remaining_calories| {
-                animal.calories = remaining_calories;
-                egg_laying_animal.eggs -= 1;
-                LizardComponent {}
-            })
-        } else {
-            None
-        }
-    }
 }
 
 pub(crate) trait LizardTrait: EggLayingAnimalTrait {
@@ -62,17 +46,18 @@ impl AnimalTrait for LizardArchetype {
     fn eat(&mut self, calories: u32) {
         self.animal.eat(calories)
     }
+
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
-        self.lizard
-            .try_reproduce(&mut self.egg_laying_animal, &mut self.animal)
-            .map(|lizard| Self::Offspring {
-                lizard: lizard,
-                egg_laying_animal: EggLayingAnimalComponent { eggs: INIT_EGGS },
+        self.egg_laying_animal
+            .try_reproduce(&mut self.animal)
+            .map(|egg_laying_animal| Self::Offspring {
+                lizard: self.lizard.clone(),
+                egg_laying_animal,
                 animal: self.animal.clone(),
                 obj: ObjComponent {
                     obj_id: ObjComponent::new_id(),
                     parent_id: Some(self.obj.obj_id.clone()),
-                    obj_type: ObjType::Lizard,
+                    obj_type: ObjType::Bird,
                 },
             })
     }

@@ -13,7 +13,7 @@ use bird::BirdTrait;
 use lizard::LizardComponent;
 use lizard::LizardTrait;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct DragonComponent {
     etanol_liters: u32,
 }
@@ -21,23 +21,6 @@ struct DragonComponent {
 impl DragonComponent {
     fn fire(&self) {
         println!("DragonArchetype::fire");
-    }
-    fn try_reproduce(
-        &mut self,
-        egg_laying_animal: &mut EggLayingAnimalComponent,
-        animal: &mut AnimalComponent,
-    ) -> Option<DragonComponent> {
-        if egg_laying_animal.eggs > 0 {
-            animal.calories.checked_sub(50).map(|remaining_calories| {
-                animal.calories = remaining_calories;
-                egg_laying_animal.eggs -= 1;
-                DragonComponent {
-                    etanol_liters: self.etanol_liters.clone(),
-                }
-            })
-        } else {
-            None
-        }
     }
 }
 
@@ -84,13 +67,13 @@ impl AnimalTrait for DragonArchetype {
     }
 
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
-        self.dragon
-            .try_reproduce(&mut self.egg_laying_animal, &mut self.animal)
-            .map(|dragon: DragonComponent| Self::Offspring {
-                dragon,
+        self.egg_laying_animal
+            .try_reproduce(&mut self.animal)
+            .map(|egg_laying_animal| Self::Offspring {
+                dragon: self.dragon.clone(),
                 bird: self.bird.clone(),
                 lizard: self.lizard.clone(),
-                egg_laying_animal: EggLayingAnimalComponent { eggs: INIT_EGGS },
+                egg_laying_animal,
                 animal: self.animal.clone(),
                 obj: ObjComponent {
                     obj_id: ObjComponent::new_id(),

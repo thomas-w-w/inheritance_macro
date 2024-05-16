@@ -12,22 +12,6 @@ impl BirdComponent {
     pub(crate) fn peep(&self) {
         println!("BirdArchetype::peep");
     }
-
-    pub(crate) fn try_reproduce(
-        &mut self,
-        egg_laying_animal: &mut EggLayingAnimalComponent,
-        animal: &mut AnimalComponent,
-    ) -> Option<BirdComponent> {
-        if egg_laying_animal.eggs > 0 {
-            animal.calories.checked_sub(50).map(|remaining_calories| {
-                animal.calories = remaining_calories;
-                egg_laying_animal.eggs -= 1;
-                BirdComponent {}
-            })
-        } else {
-            None
-        }
-    }
 }
 
 pub(crate) trait BirdTrait: EggLayingAnimalTrait {
@@ -38,7 +22,7 @@ pub(crate) trait BirdTrait: EggLayingAnimalTrait {
 struct BirdArchetype {
     bird: BirdComponent,
     animal: AnimalComponent,
-    egg_laying_animal_component: EggLayingAnimalComponent,
+    egg_laying_animal: EggLayingAnimalComponent,
     obj: ObjComponent,
 }
 
@@ -46,13 +30,13 @@ impl BirdArchetype {
     pub fn new(
         bird: BirdComponent,
         animal: AnimalComponent,
-        egg_laying_animal_component: EggLayingAnimalComponent,
+        egg_laying_animal: EggLayingAnimalComponent,
         obj: ObjComponent,
     ) -> Self {
         Self {
             bird,
             animal,
-            egg_laying_animal_component,
+            egg_laying_animal,
             obj,
         }
     }
@@ -67,13 +51,14 @@ impl AnimalTrait for BirdArchetype {
     fn eat(&mut self, calories: u32) {
         self.animal.eat(calories)
     }
+
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
-        self.bird
-            .try_reproduce(&mut self.egg_laying_animal_component, &mut self.animal)
-            .map(|bird| Self::Offspring {
-                bird: bird,
+        self.egg_laying_animal
+            .try_reproduce(&mut self.animal)
+            .map(|egg_laying_animal| Self::Offspring {
+                bird: self.bird.clone(),
+                egg_laying_animal,
                 animal: self.animal.clone(),
-                egg_laying_animal_component: EggLayingAnimalComponent { eggs: INIT_EGGS },
                 obj: ObjComponent {
                     obj_id: ObjComponent::new_id(),
                     parent_id: Some(self.obj.obj_id.clone()),
