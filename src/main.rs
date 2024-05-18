@@ -19,6 +19,9 @@ use futures::executor::block_on;
 use crate::dragon::bird::*;
 use crate::dragon::lizard::*;
 
+mod model;
+use model::entities::dragon_entity::*;
+
 use dragon::*;
 
 fn test_dragon() {
@@ -69,9 +72,10 @@ fn main() {
     // //obj_main();
     // //
     // // block_on(main_dragon());
-    bird_main();
-    lizard_main();
-    dragon_main();
+    // // bird_main();
+    // // lizard_main();
+    // // dragon_main();
+    dragon_entity_main();
 }
 
 //fn do_work_w_dragon(dragon: Dragon) {}
