@@ -1,8 +1,11 @@
+use std::sync::{Arc, Mutex};
+
 use crate::model::components::{
     animal_component::AnimalComponent,
     bird_component::BirdComponent,
     dragon_component::DragonComponent,
     egglaying_animal_component::{EgglayingAnimalComponent, INIT_EGGS},
+    food_component::FoodComponent,
     lizard_component::LizardComponent,
     obj_component::{ObjComponent, ObjType},
 };
@@ -12,13 +15,14 @@ use crate::model::traits::{
 };
 
 #[derive(Debug)]
-struct DragonEntity {
+pub(crate) struct DragonEntity {
     dragon: DragonComponent,
     bird: BirdComponent,
     lizard: LizardComponent,
     egg_laying_animal: EgglayingAnimalComponent,
     animal: AnimalComponent,
     obj: ObjComponent,
+    shared_food: Arc<Mutex<FoodComponent>>,
 }
 
 impl DragonEntity {
@@ -29,6 +33,7 @@ impl DragonEntity {
         egg_laying_animal: EgglayingAnimalComponent,
         animal: AnimalComponent,
         obj: ObjComponent,
+        shared_food: Arc<Mutex<FoodComponent>>,
     ) -> Self {
         Self {
             dragon,
@@ -37,6 +42,7 @@ impl DragonEntity {
             egg_laying_animal,
             animal,
             obj,
+            shared_food,
         }
     }
 }
@@ -45,8 +51,8 @@ impl ObjTrait for DragonEntity {}
 
 impl AnimalTrait for DragonEntity {
     type Offspring = DragonEntity;
-    fn eat(&mut self, calories: u32) {
-        self.animal.eat(calories)
+    fn eat(&mut self, calories: u32) -> bool {
+        self.animal.eat(Arc::clone(&self.shared_food), calories)
     }
 
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
@@ -63,6 +69,7 @@ impl AnimalTrait for DragonEntity {
                     parent_id: Some(self.obj.obj_id.clone()),
                     obj_type: ObjType::Dragon,
                 },
+                shared_food: Arc::clone(&self.shared_food),
             })
     }
 }
@@ -82,8 +89,9 @@ impl LizardTrait for DragonEntity {
 }
 
 impl DragonTrait for DragonEntity {
-    fn fire(&self) {
-        self.dragon.fire();
+    fn fire(&mut self) -> bool {
+        self.dragon
+            .fire(&mut self.animal, Arc::clone(&self.shared_food))
     }
 }
 
@@ -101,28 +109,31 @@ pub fn dragon_entity_main() {
             parent_id: None,
             obj_type: ObjType::Dragon,
         },
+        Arc::new(Mutex::new(FoodComponent {
+            food_capacity: 100000,
+        })),
     );
     dragon.fire();
     dragon.eat(50);
     dragon.peep();
     dragon.crawl();
     println!("\r\nDragon: {:?}", dragon);
-    dragons_only(&dragon);
+    dragons_only(&mut dragon);
     if let Some(mut new_dragon) = dragon.try_reproduce() {
         new_dragon.eat(50);
         println!("\r\nChild dragon: {:?}", new_dragon);
-        dragons_only(&new_dragon);
+        dragons_only(&mut new_dragon);
         if let Some(mut new_new_dragon) = new_dragon.try_reproduce() {
             new_new_dragon.eat(50);
-            dragons_only(&new_dragon);
+            dragons_only(&mut new_dragon);
             println!("\r\nChild dragon: {:?}", new_dragon);
             if let Some(mut new_new_new_dragon) = new_new_dragon.try_reproduce() {
                 new_new_dragon.eat(50);
-                dragons_only(&new_new_new_dragon);
+                dragons_only(&mut new_new_new_dragon);
                 println!("\r\nGrand grand child dragon: {:?}", new_new_new_dragon);
                 if let Some(mut new_new_new_new_dragon) = new_new_new_dragon.try_reproduce() {
                     new_new_new_new_dragon.eat(50);
-                    dragons_only(&new_new_new_new_dragon);
+                    dragons_only(&mut new_new_new_new_dragon);
                     println!(
                         "\r\nGrand grand grand child dragon: {:?}",
                         new_new_new_new_dragon
@@ -141,6 +152,6 @@ pub fn dragon_entity_main() {
     }
 }
 
-fn dragons_only(dragon: &impl DragonTrait) {
+fn dragons_only(dragon: &mut impl DragonTrait) {
     dragon.fire();
 }

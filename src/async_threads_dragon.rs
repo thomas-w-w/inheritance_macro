@@ -1,152 +1,127 @@
 use std::{
     fmt::Error,
+    mem,
     sync::{Arc, Mutex},
-    thread,
+    thread::{self, JoinHandle},
 };
 
-use obj_fr_baseclass::{Animal, Bird, Dragon, Food, IDragon, Lizard, Obj, ObjType};
+// use obj_fr_baseclass::{Animal, Bird, Dragon, Food, IDragon, Lizard, Obj, ObjType};
 
-use crate::{obj_fr_baseclass, IAnimal, IBird, ILizard, IObj};
+// use crate::{obj_fr_baseclass, IAnimal, IBird, ILizard, IObj};
+use crate::model::{
+    components::{
+        animal_component::AnimalComponent,
+        bird_component::BirdComponent,
+        dragon_component::DragonComponent,
+        egglaying_animal_component::{EgglayingAnimalComponent, INIT_EGGS},
+        food_component::FoodComponent,
+        lizard_component::LizardComponent,
+        obj_component::{ObjComponent, ObjType},
+    },
+    entities::{
+        bird_entity::BirdEntity as Bird, dragon_entity::DragonEntity as Dragon,
+        lizard_entity::LizardEntity as Lizard,
+    },
+    traits::{animal_trait::AnimalTrait, dragon_trait::DragonTrait},
+};
 
-fn create_bird(
-    id: String,
-    given_name: String,
-    food_reserve: i32,
-    maximum_speed: i32,
-    wing_span: i32,
-    food_resource: Arc<Mutex<Food>>,
-) -> Arc<Mutex<Bird>> {
-    let obj = Arc::new(Mutex::new(Obj::new(id, ObjType::Bird)));
+fn create_bird(food_reserve: u32, food_resource: Arc<Mutex<FoodComponent>>) -> Arc<Mutex<Bird>> {
+    let obj = ObjComponent {
+        obj_id: ObjComponent::new_id(),
+        parent_id: None,
+        obj_type: ObjType::Bird,
+    };
 
-    let animal = Arc::new(Mutex::new(Animal::new(
-        Arc::clone(&obj),
-        given_name.clone(),
-        food_reserve,
+    let animal = AnimalComponent {
+        calories: food_reserve,
+    };
+
+    let egg_laying_animal = EgglayingAnimalComponent { eggs: INIT_EGGS };
+
+    let bird = BirdComponent {};
+
+    Arc::new(Mutex::new(Bird::new(
+        bird,
+        animal,
+        egg_laying_animal,
+        obj,
         food_resource,
-    )));
-
-    let bird = Arc::new(Mutex::new(Bird::new(
-        Arc::clone(&animal),
-        maximum_speed,
-        wing_span,
-    )));
-
-    bird
+    )))
 }
 
-fn create_lizard(
-    id: String,
-    given_name: String,
-    food_reserve: i32,
-    number_of_claws: i32,
-    scale_colors: String,
-    food_resource: Arc<Mutex<Food>>,
-) -> Arc<Mutex<Lizard>> {
-    let obj = Arc::new(Mutex::new(Obj::new(id, ObjType::Lizard)));
+fn create_lizard(food_reserve: u32, food_resource: Arc<Mutex<FoodComponent>>) -> Lizard {
+    let obj = ObjComponent {
+        obj_id: ObjComponent::new_id(),
+        parent_id: None,
+        obj_type: ObjType::Lizard,
+    };
 
-    let animal = Arc::new(Mutex::new(Animal::new(
-        Arc::clone(&obj),
-        given_name.clone(),
-        food_reserve,
-        food_resource,
-    )));
+    let animal = AnimalComponent {
+        calories: food_reserve,
+    };
 
-    let lizard = Arc::new(Mutex::new(Lizard::new(
-        Arc::clone(&animal),
-        number_of_claws,
-        scale_colors,
-    )));
+    let egg_laying_animal = EgglayingAnimalComponent { eggs: INIT_EGGS };
 
-    lizard
+    let lizard = LizardComponent {};
+
+    Lizard::new(lizard, egg_laying_animal, animal, obj, food_resource)
 }
 
 fn create_dragon(
-    id: String,
-    given_name: String,
-    food_reserve: i32,
-    maximum_speed: i32,
-    wing_span: i32,
-    number_of_claws: i32,
-    scale_colors: String,
-    fire_capacity: i32,
-    food_resource: Arc<Mutex<Food>>,
+    food_reserve: u32,
+    fire_capacity: u32,
+    food_resource: Arc<Mutex<FoodComponent>>,
 ) -> Arc<Mutex<Dragon>> {
-    let obj = Arc::new(Mutex::new(Obj::new(id, ObjType::Dragon)));
-
-    let animal = Arc::new(Mutex::new(Animal::new(
-        Arc::clone(&obj),
-        given_name.clone(),
-        food_reserve,
+    let dragon = Dragon::new(
+        DragonComponent {
+            etanol_liters: fire_capacity,
+        },
+        BirdComponent {},
+        LizardComponent {},
+        EgglayingAnimalComponent { eggs: INIT_EGGS },
+        AnimalComponent {
+            calories: food_reserve,
+        },
+        ObjComponent {
+            obj_id: ObjComponent::new_id(),
+            parent_id: None,
+            obj_type: ObjType::Dragon,
+        },
         food_resource,
-    )));
-
-    let bird = Arc::new(Mutex::new(Bird::new(
-        Arc::clone(&animal),
-        maximum_speed,
-        wing_span,
-    )));
-
-    let lizard = Arc::new(Mutex::new(Lizard::new(
-        Arc::clone(&animal),
-        number_of_claws,
-        scale_colors,
-    )));
-
-    let dragon = Arc::new(Mutex::new(Dragon::new(
-        Arc::clone(&bird),
-        Arc::clone(&lizard),
-        fire_capacity,
-    )));
-    dragon
+    );
+    Arc::new(Mutex::new(dragon))
 }
 
 pub async fn main_dragon() {
     println!("# ##  ###   ####  M A I N I  #####    ####   ###  ## #");
 
-    let food_resource: Arc<Mutex<Food>> = Arc::new(Mutex::new(Food::new(
-        "Food-1".to_string(),
-        ObjType::Food,
-        100000,
-    )));
+    let food_component = FoodComponent {
+        food_capacity: 1000,
+    };
+
+    let food_resource: Arc<Mutex<FoodComponent>> = Arc::new(Mutex::new(food_component));
 
     let mut fire_handle_and_dragon_vect: Vec<(
-        std::thread::JoinHandle<Result<String, Error>>,
+        JoinHandle<Result<String, Error>>,
         Arc<Mutex<Dragon>>,
     )> = vec![];
 
-    let mut crawl_handle_and_lizard_vect: Vec<(
-        std::thread::JoinHandle<Result<String, Error>>,
-        Arc<Mutex<Lizard>>,
-    )> = vec![];
+    let lizard_handles: Arc<Mutex<Vec<(JoinHandle<Result<String, Error>>, Arc<Mutex<Lizard>>)>>> =
+        Arc::new(Mutex::new(vec![]));
 
-    let mut fly_handle_and_bird_vect: Vec<(
-        std::thread::JoinHandle<Result<String, Error>>,
-        Arc<Mutex<Bird>>,
-    )> = vec![];
+    let mut fly_handle_and_bird_vect: Vec<(JoinHandle<Result<String, Error>>, Arc<Mutex<Bird>>)> =
+        vec![];
 
-    let food_reserve: i32 = 100;
-    let maximum_speed: i32 = 10;
-    let wing_span: i32 = 34;
-    let number_of_claws: i32 = 4;
-    let scale_colors: String = "red green yellow".to_string();
-    let fire_capacity: i32 = 0;
+    let food_reserve: u32 = 100;
+    let fire_capacity: u32 = 0;
 
     println!("# ##  ###   ####  M A I N II dragons  #####    ####   ###  ## #");
 
-    for i in 2..50 {
+    // for i in 2..50 {
+    for i in 1..1 {
         let id = format!("{}-{}", ObjType::Dragon, i);
 
-        let dragon_pointer = create_dragon(
-            id.clone(),
-            format!("Red Dragon [{}]", id.clone()),
-            food_reserve,
-            maximum_speed,
-            wing_span,
-            number_of_claws,
-            scale_colors.clone(),
-            fire_capacity,
-            Arc::clone(&food_resource),
-        );
+        let dragon_pointer = create_dragon(food_reserve, fire_capacity, Arc::clone(&food_resource));
 
         let dragon_pointer_clone = Arc::clone(&dragon_pointer);
 
@@ -154,18 +129,7 @@ pub async fn main_dragon() {
             loop {
                 let mut dragon = dragon_pointer_clone.lock().unwrap();
 
-                let s = format!(
-                    "id: {}, obj type: {}, given name: {}, food reserve: {}, wing span: {}, max speed: {}, n claws: {}, colors: {}, fire capacity: {}",
-                    dragon.get_id(),
-                    dragon.get_obj_type(),
-                    dragon.get_given_name(),
-                    dragon.get_food_reserve(),
-                    dragon.get_wing_span(),
-                    dragon.get_maximum_speed(),
-                    dragon.get_number_of_claws(),
-                    dragon.get_scale_colors(),
-                    dragon.get_fire_capacity()
-                );
+                let s = format!("{:?}", dragon);
 
                 let mut do_break = false;
 
@@ -191,67 +155,33 @@ pub async fn main_dragon() {
 
     println!("# ##  ###   ####  M A I N III lizards  #####    ####   ###  ## #");
 
-    for i in 50..90 {
-        let id = format!("{}-{}", ObjType::Lizard, i);
-        let lizard_pointer = create_lizard(
-            id.clone(),
-            format!("Green Lizard [{}]", id.clone()),
+    // for i in 50..90 {
+    for _i in 1..2 {
+        let lizard: Arc<Mutex<Lizard>> = Arc::new(Mutex::new(create_lizard(
             food_reserve,
-            number_of_claws,
-            scale_colors.clone(),
             Arc::clone(&food_resource),
-        );
+        )));
 
-        let lizard_pointer_clone = Arc::clone(&lizard_pointer);
+        let lizard_handle = run_lizard(Arc::clone(&lizard), Arc::clone(&lizard_handles));
 
-        let fire_handle = thread::spawn(move || {
-            loop {
-                let mut lizard = lizard_pointer_clone.lock().unwrap();
+        // https://stackoverflow.com/a/69153739/24129232
+        // To exchange values between threads without waiting for the thread to complete, you can use channels.
+        // Function std::sync::mpsc::channel
+        // https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html
 
-                let s = format!(
-                    "id: {}, obj type: {}, given name: {}, food reserve: {} n claws: {}, colors: {}",
-                    lizard.get_id(),
-                    lizard.get_obj_type(),
-                    lizard.get_given_name(),
-                    lizard.get_food_reserve(),
-                    lizard.get_number_of_claws(),
-                    lizard.get_scale_colors(),
-                );
-
-                let mut do_break = false;
-
-                if lizard.eat() {
-                    println!("loop: Lizard {s} ATE.");
-                } else {
-                    println!("loop: Lizard {s} did NOT eat. BREAK.");
-                    do_break = true;
-                }
-
-                drop(lizard);
-
-                if do_break {
-                    break;
-                }
-            }
-            let str = format!("{}", id.clone()).as_str().to_owned();
-            Ok(str)
-        });
-
-        crawl_handle_and_lizard_vect.push((fire_handle, lizard_pointer));
+        lizard_handles
+            .lock()
+            .unwrap()
+            .push((lizard_handle, Arc::clone(&lizard)));
     }
 
     println!("# ##  ###   ####  M A I N IV birds  #####    ####   ###  ## #");
 
-    for i in 90..130 {
+    // for i in 90..130 {
+    for i in 90..90 {
         let id = format!("{}-{}", ObjType::Bird, i);
-        let bird_pointer = create_bird(
-            id.clone(),
-            format!("Blue Bird [{}]", id.clone()),
-            food_reserve,
-            maximum_speed,
-            wing_span,
-            Arc::clone(&food_resource),
-        );
+
+        let bird_pointer = create_bird(food_reserve, Arc::clone(&food_resource));
 
         let bird_pointer_clone = Arc::clone(&bird_pointer);
 
@@ -259,19 +189,11 @@ pub async fn main_dragon() {
             loop {
                 let mut bird = bird_pointer_clone.lock().unwrap();
 
-                let s = format!(
-                    "id: {}, obj type: {}, given name: {}, food reserve: {}, wing span: {}, max speed: {}",
-                    bird.get_id(),
-                    bird.get_obj_type(),
-                    bird.get_given_name(),
-                    bird.get_food_reserve(),
-                    bird.get_wing_span(),
-                    bird.get_maximum_speed()
-                );
+                let s = format!("{:?}", bird);
 
                 let mut do_break = false;
 
-                if bird.eat() {
+                if bird.eat(100) {
                     println!("loop: Bird {s} ATE.");
                 } else {
                     println!("loop: Bird {s} did NOT eat. BREAK.");
@@ -291,7 +213,8 @@ pub async fn main_dragon() {
         fly_handle_and_bird_vect.push((fly_handle, bird_pointer));
     }
 
-    let mut outer_handles: Vec<std::thread::JoinHandle<Result<String, Error>>> = vec![];
+    let outer_handles: Arc<Mutex<Vec<JoinHandle<Result<String, Error>>>>> =
+        Arc::new(Mutex::new(vec![]));
 
     println!("# ##  ###   ####  M A I N V join/collect dragons  #####    ####   ###  ## #");
 
@@ -321,39 +244,60 @@ pub async fn main_dragon() {
             Ok(s)
         });
 
-        outer_handles.push(outer_handle);
+        outer_handles.lock().unwrap().push(outer_handle);
     }
 
     println!("# ##  ###   ####  M A I N VI join/collect lizards  #####    ####   ###  ## #");
 
-    for handle_and_lizard in crawl_handle_and_lizard_vect {
-        let handle = handle_and_lizard.0;
-        let lizard_pointer = handle_and_lizard.1;
+    let lizard_handles_clone: Arc<
+        Mutex<Vec<(JoinHandle<Result<String, Error>>, Arc<Mutex<Lizard>>)>>,
+    > = Arc::clone(&lizard_handles);
 
-        let lizard = lizard_pointer.lock().unwrap();
+    let outer_handles_clone: Arc<Mutex<Vec<JoinHandle<Result<String, Error>>>>> =
+        Arc::clone(&outer_handles);
 
-        println!("lizard: {:?}", lizard);
+    let lizards_with_repro_handle = thread::spawn(move || {
+        //https://stackoverflow.com/a/72018692/24129232
+        let mut lizard_handles_locked = lizard_handles_clone.lock().unwrap();
 
-        drop(lizard);
+        //https://users.rust-lang.org/t/how-can-i-dereference-an-arc-mutex-vec-for-return/92060/2
+        //https://doc.rust-lang.org/std/mem/fn.take.html
+        let lizard_handles_vec: Vec<(JoinHandle<Result<String, Error>>, Arc<Mutex<Lizard>>)> =
+            mem::take(&mut *lizard_handles_locked);
 
-        let outer_handle = thread::spawn(move || {
-            let result = handle.join();
+        drop(lizard_handles_locked);
 
-            let s = match &result {
-                Ok(s) => {
-                    format!("Join: Ok: {:?}", s)
-                }
-                Err(msg) => {
-                    format!("Join: Err: {:?}", msg)
-                }
-            };
+        for handle_and_lizard in lizard_handles_vec {
+            let item = handle_and_lizard;
 
-            //let str = format!("{:?}", lizard_pointer).as_str().to_owned();
-            Ok(s)
-        });
+            let handle = item.0;
+            let lizard = item.1;
 
-        outer_handles.push(outer_handle);
-    }
+            println!("lizard: {:?}", lizard);
+
+            drop(lizard);
+
+            let outer_handle = thread::spawn(move || {
+                let result = handle.join();
+
+                let s = match &result {
+                    Ok(s) => {
+                        format!("Join: Ok: {:?}", s)
+                    }
+                    Err(msg) => {
+                        format!("Join: Err: {:?}", msg)
+                    }
+                };
+
+                //let str = format!("{:?}", lizard_pointer).as_str().to_owned();
+                Ok(s)
+            });
+
+            outer_handles_clone.lock().unwrap().push(outer_handle);
+        }
+    });
+
+    let all_done = lizards_with_repro_handle.join();
 
     println!("# ##  ###   ####  M A I N VI join/collect birds  #####    ####   ###  ## #");
 
@@ -383,12 +327,18 @@ pub async fn main_dragon() {
             Ok(s)
         });
 
-        outer_handles.push(outer_handle);
+        outer_handles.lock().unwrap().push(outer_handle);
     }
 
     println!("# ##  ###   ####  M A I N VI join/collect outer handles w dragons and lizards  #####    ####   ###  ## #");
 
-    for outer_handle in outer_handles {
+    let mut outer_handles_locked = outer_handles.lock().unwrap();
+
+    let outer_handles_copy = mem::take(&mut *outer_handles_locked);
+
+    drop(outer_handles_locked);
+
+    for outer_handle in outer_handles_copy {
         let result = outer_handle.join();
         match result {
             Ok(s) => {
@@ -399,4 +349,58 @@ pub async fn main_dragon() {
             }
         }
     }
+}
+
+fn run_lizard(
+    lizard_mutex: Arc<Mutex<Lizard>>,
+    lizard_handles_mutex: Arc<Mutex<Vec<(JoinHandle<Result<String, Error>>, Arc<Mutex<Lizard>>)>>>,
+) -> JoinHandle<Result<String, Error>> {
+    let lizard_handle = thread::spawn(move || {
+        let mut internal_lizard_handles: Vec<(
+            JoinHandle<Result<String, Error>>,
+            Arc<Mutex<Lizard>>,
+        )> = vec![];
+
+        loop {
+            let mut lizard = lizard_mutex.lock().unwrap();
+
+            let s = format!("{:?}", lizard);
+
+            let mut do_break = false;
+
+            if lizard.eat(100) {
+                println!("loop: Lizard {s} ATE.");
+
+                if let Some(child_lizard) = lizard.try_reproduce() {
+                    //not needed more
+                    drop(lizard);
+
+                    println!("\r\nloop: Lizard {s} REPRODUCED.\r\n");
+
+                    let child_lizard_mutex: Arc<Mutex<Lizard>> = Arc::new(Mutex::new(child_lizard));
+
+                    let child_lizard_handle = run_lizard(
+                        Arc::clone(&child_lizard_mutex),
+                        Arc::clone(&lizard_handles_mutex),
+                    );
+
+                    internal_lizard_handles
+                        .push((child_lizard_handle, Arc::clone(&child_lizard_mutex)));
+                } else {
+                    println!("loop: Lizard {s} did NOT reproduce.");
+                }
+            } else {
+                println!("loop: Lizard {s} did NOT eat. BREAK.");
+                do_break = true;
+            }
+
+            if do_break {
+                break;
+            }
+        }
+        let str = format!("{:?}", *lizard_mutex.lock().unwrap());
+        Ok(str)
+    });
+
+    lizard_handle
 }

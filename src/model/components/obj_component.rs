@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Copy)]
 pub(crate) enum ObjType {
     Obj,
     Food,

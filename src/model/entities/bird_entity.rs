@@ -1,7 +1,10 @@
+use std::sync::{Arc, Mutex};
+
 use crate::model::components::{
     animal_component::AnimalComponent,
     bird_component::BirdComponent,
     egglaying_animal_component::{EgglayingAnimalComponent, INIT_EGGS},
+    food_component::FoodComponent,
     obj_component::{ObjComponent, ObjType},
 };
 use crate::model::traits::{
@@ -10,11 +13,12 @@ use crate::model::traits::{
 };
 
 #[derive(Debug)]
-struct BirdEntity {
+pub(crate) struct BirdEntity {
     bird: BirdComponent,
     animal: AnimalComponent,
     egg_laying_animal: EgglayingAnimalComponent,
     obj: ObjComponent,
+    shared_food: Arc<Mutex<FoodComponent>>,
 }
 
 impl BirdEntity {
@@ -23,12 +27,14 @@ impl BirdEntity {
         animal: AnimalComponent,
         egg_laying_animal: EgglayingAnimalComponent,
         obj: ObjComponent,
+        shared_food: Arc<Mutex<FoodComponent>>,
     ) -> Self {
         Self {
             bird,
             animal,
             egg_laying_animal,
             obj,
+            shared_food,
         }
     }
 }
@@ -39,8 +45,8 @@ impl EgglayingAnimalTrait for BirdEntity {}
 
 impl AnimalTrait for BirdEntity {
     type Offspring = BirdEntity;
-    fn eat(&mut self, calories: u32) {
-        self.animal.eat(calories)
+    fn eat(&mut self, calories: u32) -> bool {
+        self.animal.eat(Arc::clone(&self.shared_food), calories)
     }
 
     fn try_reproduce(&mut self) -> Option<Self::Offspring> {
@@ -55,6 +61,7 @@ impl AnimalTrait for BirdEntity {
                     parent_id: Some(self.obj.obj_id.clone()),
                     obj_type: ObjType::Bird,
                 },
+                shared_food: Arc::clone(&self.shared_food),
             })
     }
 }
@@ -75,6 +82,9 @@ pub fn bird_main() {
             parent_id: None,
             obj_type: ObjType::Bird,
         },
+        Arc::new(Mutex::new(FoodComponent {
+            food_capacity: 10000,
+        })),
     );
     bird.peep();
     bird.eat(50);
