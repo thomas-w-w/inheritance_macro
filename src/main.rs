@@ -8,8 +8,4 @@ mod model;
 
 fn main() {
     block_on(main_dragon());
-    // // bird_main();
-    // // lizard_main();
-    // // dragon_main();
-    // // dragon_entity_main();
 }
