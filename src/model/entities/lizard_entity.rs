@@ -53,7 +53,10 @@ impl AnimalTrait for LizardEntity {
             .map(|egg_laying_animal| Self::Offspring {
                 lizard: self.lizard.clone(),
                 egg_laying_animal,
-                animal: self.animal.clone(),
+                animal: AnimalComponent {
+                    calories: self.animal.calories,
+                    given_name: format!("{} child", self.animal.given_name),
+                },
                 obj: ObjComponent {
                     obj_id: ObjComponent::new_id(),
                     parent_id: Some(self.obj.obj_id.clone()),
@@ -61,6 +64,12 @@ impl AnimalTrait for LizardEntity {
                 },
                 shared_food: Arc::clone(&self.shared_food),
             })
+    }
+    fn get_given_name(&self) -> String {
+        self.animal.given_name.to_owned()
+    }
+    fn set_given_name(&mut self, given_name: String) {
+        self.animal.given_name = given_name;
     }
 }
 
@@ -76,7 +85,10 @@ pub fn lizard_main() {
     let mut lizard = LizardEntity::new(
         LizardComponent {},
         EgglayingAnimalComponent { eggs: INIT_EGGS },
-        AnimalComponent { calories: 10 },
+        AnimalComponent {
+            calories: 10,
+            given_name: format!("{} main", ObjType::Lizard),
+        },
         ObjComponent {
             obj_id: ObjComponent::new_id(),
             parent_id: None,

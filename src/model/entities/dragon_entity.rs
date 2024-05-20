@@ -59,11 +59,16 @@ impl AnimalTrait for DragonEntity {
         self.egg_laying_animal
             .try_reproduce(&mut self.animal)
             .map(|egg_laying_animal| Self::Offspring {
-                dragon: self.dragon.clone(),
+                dragon: DragonComponent {
+                    etanol_liters: self.dragon.etanol_liters,
+                },
                 bird: self.bird.clone(),
                 lizard: self.lizard.clone(),
                 egg_laying_animal,
-                animal: self.animal.clone(),
+                animal: AnimalComponent {
+                    calories: self.animal.calories,
+                    given_name: format!("{} child", self.animal.given_name),
+                },
                 obj: ObjComponent {
                     obj_id: ObjComponent::new_id(),
                     parent_id: Some(self.obj.obj_id.clone()),
@@ -71,6 +76,12 @@ impl AnimalTrait for DragonEntity {
                 },
                 shared_food: Arc::clone(&self.shared_food),
             })
+    }
+    fn get_given_name(&self) -> String {
+        self.animal.given_name.to_owned()
+    }
+    fn set_given_name(&mut self, given_name: String) {
+        self.animal.given_name = given_name;
     }
 }
 
@@ -103,7 +114,10 @@ pub fn dragon_entity_main() {
         BirdComponent {},
         LizardComponent {},
         EgglayingAnimalComponent { eggs: INIT_EGGS },
-        AnimalComponent { calories: 10 },
+        AnimalComponent {
+            calories: 10,
+            given_name: format!("{} main", ObjType::Dragon),
+        },
         ObjComponent {
             obj_id: ObjComponent::new_id(),
             parent_id: None,

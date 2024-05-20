@@ -55,7 +55,10 @@ impl AnimalTrait for BirdEntity {
             .map(|egg_laying_animal| Self::Offspring {
                 bird: self.bird.clone(),
                 egg_laying_animal,
-                animal: self.animal.clone(),
+                animal: AnimalComponent {
+                    calories: self.animal.calories,
+                    given_name: format!("{} child", self.animal.given_name),
+                },
                 obj: ObjComponent {
                     obj_id: ObjComponent::new_id(),
                     parent_id: Some(self.obj.obj_id.clone()),
@@ -63,6 +66,12 @@ impl AnimalTrait for BirdEntity {
                 },
                 shared_food: Arc::clone(&self.shared_food),
             })
+    }
+    fn get_given_name(&self) -> String {
+        self.animal.given_name.to_owned()
+    }
+    fn set_given_name(&mut self, given_name: String) {
+        self.animal.given_name = given_name;
     }
 }
 
@@ -75,7 +84,10 @@ impl BirdTrait for BirdEntity {
 pub fn bird_main() {
     let mut bird = BirdEntity::new(
         BirdComponent {},
-        AnimalComponent { calories: 10 },
+        AnimalComponent {
+            calories: 10,
+            given_name: format!("{} main", ObjType::Bird),
+        },
         EgglayingAnimalComponent { eggs: INIT_EGGS },
         ObjComponent {
             obj_id: ObjComponent::new_id(),

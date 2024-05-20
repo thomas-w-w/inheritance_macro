@@ -5,6 +5,7 @@ use super::food_component::FoodComponent;
 #[derive(Clone, Debug)]
 pub(crate) struct AnimalComponent {
     pub(crate) calories: u32,
+    pub(crate) given_name: String,
 }
 
 impl AnimalComponent {
@@ -13,12 +14,17 @@ impl AnimalComponent {
 
         let mut food_capacity = food.food_capacity;
 
-        if food_capacity >= 100 {
-            food.food_capacity -= 100;
+        if food_capacity >= calories {
+            food.food_capacity -= calories;
 
             food_capacity = food.food_capacity;
 
-            self.calories += 100;
+            self.calories += calories;
+
+            println!(
+                "AnimalComponent::eat: {} ate {} calories. GLOBAL food_capacity: {:?}",
+                self.given_name, calories, food.food_capacity
+            );
 
             return true;
         }

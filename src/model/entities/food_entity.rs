@@ -16,7 +16,7 @@ impl FoodEntity {
 impl ObjTrait for FoodEntity {}
 
 impl FoodTrait for FoodEntity {
-    fn eat(&mut self, chunk: i32) -> bool {
+    fn eat(&mut self, chunk: u32) -> bool {
         self.food.eat(chunk)
     }
 }
