@@ -1,7 +1,5 @@
 use std::{
-    fmt::{format, Error},
-    mem,
-    ops::DerefMut,
+    fmt::Error,
     sync::{Arc, Mutex},
     thread::{self, JoinHandle},
 };
@@ -95,68 +93,15 @@ fn create_dragon(
     dragon
 }
 
-pub async fn main_dragon() {
-    let food_component = FoodComponent {
-        food_capacity: 4000,
-    };
-
-    let food_resource: Arc<Mutex<FoodComponent>> = Arc::new(Mutex::new(food_component));
-
-    let mut handles: Vec<JoinHandle<Result<String, Error>>> = vec![];
-
-    let food_reserve: u32 = 10;
-
-    for index in 1..4 {
-        let bird: Arc<Mutex<Bird>> = Arc::new(Mutex::new(create_bird(
-            index,
-            food_reserve,
-            Arc::clone(&food_resource),
-        )));
-
-        let handle = run_bird(Arc::clone(&bird));
-
-        handles.push(handle);
-    }
-
-    for index in 1..4 {
-        let lizard: Arc<Mutex<Lizard>> = Arc::new(Mutex::new(create_lizard(
-            index,
-            food_reserve,
-            Arc::clone(&food_resource),
-        )));
-
-        let handle = run_lizard(Arc::clone(&lizard));
-
-        handles.push(handle);
-    }
-
-    let fire_capacity: u32 = 0;
-
-    for index in 1..4 {
-        let dragon: Arc<Mutex<Dragon>> = Arc::new(Mutex::new(create_dragon(
-            index,
-            food_reserve,
-            fire_capacity,
-            Arc::clone(&food_resource),
-        )));
-
-        let handle = run_dragon(Arc::clone(&dragon));
-
-        handles.push(handle);
-    }
-
-    join_handles(handles);
-}
-
 fn join_handles(handles: Vec<JoinHandle<Result<String, Error>>>) {
     for lizard_handle in handles {
         let result = lizard_handle.join();
         match result {
             Ok(s) => {
-                //println!("\r\n\r\nJoin outer: Ok: {:?}", s);
+                println!("Join outer: Ok: {:?}\r\n", s);
             }
             Err(msg) => {
-                println!("Join outer: Err: {:?}", msg);
+                println!("Join outer: Err: {:?}\r\n", msg);
             }
         }
     }
@@ -364,4 +309,57 @@ fn run_dragon(dragon_mutex: Arc<Mutex<Dragon>>) -> JoinHandle<Result<String, Err
     });
 
     handle
+}
+
+pub async fn main_dragon() {
+    let food_component = FoodComponent {
+        food_capacity: 4000,
+    };
+
+    let food_resource: Arc<Mutex<FoodComponent>> = Arc::new(Mutex::new(food_component));
+
+    let mut handles: Vec<JoinHandle<Result<String, Error>>> = vec![];
+
+    let food_reserve: u32 = 10;
+
+    for index in 1..4 {
+        let bird: Arc<Mutex<Bird>> = Arc::new(Mutex::new(create_bird(
+            index,
+            food_reserve,
+            Arc::clone(&food_resource),
+        )));
+
+        let handle = run_bird(Arc::clone(&bird));
+
+        handles.push(handle);
+    }
+
+    for index in 1..4 {
+        let lizard: Arc<Mutex<Lizard>> = Arc::new(Mutex::new(create_lizard(
+            index,
+            food_reserve,
+            Arc::clone(&food_resource),
+        )));
+
+        let handle = run_lizard(Arc::clone(&lizard));
+
+        handles.push(handle);
+    }
+
+    let fire_capacity: u32 = 0;
+
+    for index in 1..4 {
+        let dragon: Arc<Mutex<Dragon>> = Arc::new(Mutex::new(create_dragon(
+            index,
+            food_reserve,
+            fire_capacity,
+            Arc::clone(&food_resource),
+        )));
+
+        let handle = run_dragon(Arc::clone(&dragon));
+
+        handles.push(handle);
+    }
+
+    join_handles(handles);
 }

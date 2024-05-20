@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use crate::model::components::{
     animal_component::AnimalComponent,
     bird_component::BirdComponent,
-    egglaying_animal_component::{EgglayingAnimalComponent, INIT_EGGS},
+    egglaying_animal_component::EgglayingAnimalComponent,
     food_component::FoodComponent,
     obj_component::{ObjComponent, ObjType},
 };
@@ -79,36 +79,4 @@ impl BirdTrait for BirdEntity {
     fn peep(&self) {
         self.bird.peep()
     }
-}
-
-pub fn bird_main() {
-    let mut bird = BirdEntity::new(
-        BirdComponent {},
-        AnimalComponent {
-            calories: 10,
-            given_name: format!("{} main", ObjType::Bird),
-        },
-        EgglayingAnimalComponent { eggs: INIT_EGGS },
-        ObjComponent {
-            obj_id: ObjComponent::new_id(),
-            parent_id: None,
-            obj_type: ObjType::Bird,
-        },
-        Arc::new(Mutex::new(FoodComponent {
-            food_capacity: 10000,
-        })),
-    );
-    bird.peep();
-    bird.eat(50);
-    birds_only(&bird);
-    println!("\r\nBird: {:?}", bird);
-    if let Some(mut new_bird) = bird.try_reproduce() {
-        birds_only(&new_bird);
-        new_bird.eat(50);
-        println!("\r\nChild bird: {:?}", new_bird);
-    }
-}
-
-fn birds_only(bird: &impl BirdTrait) {
-    bird.peep();
 }

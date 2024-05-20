@@ -4,7 +4,7 @@ use crate::model::components::{
     animal_component::AnimalComponent,
     bird_component::BirdComponent,
     dragon_component::DragonComponent,
-    egglaying_animal_component::{EgglayingAnimalComponent, INIT_EGGS},
+    egglaying_animal_component::EgglayingAnimalComponent,
     food_component::FoodComponent,
     lizard_component::LizardComponent,
     obj_component::{ObjComponent, ObjType},
@@ -104,68 +104,4 @@ impl DragonTrait for DragonEntity {
         self.dragon
             .fire(&mut self.animal, Arc::clone(&self.shared_food))
     }
-}
-
-pub fn dragon_entity_main() {
-    let mut dragon = DragonEntity::new(
-        DragonComponent {
-            etanol_liters: 1000,
-        },
-        BirdComponent {},
-        LizardComponent {},
-        EgglayingAnimalComponent { eggs: INIT_EGGS },
-        AnimalComponent {
-            calories: 10,
-            given_name: format!("{} main", ObjType::Dragon),
-        },
-        ObjComponent {
-            obj_id: ObjComponent::new_id(),
-            parent_id: None,
-            obj_type: ObjType::Dragon,
-        },
-        Arc::new(Mutex::new(FoodComponent {
-            food_capacity: 100000,
-        })),
-    );
-    dragon.fire();
-    dragon.eat(50);
-    dragon.peep();
-    dragon.crawl();
-    println!("\r\nDragon: {:?}", dragon);
-    dragons_only(&mut dragon);
-    if let Some(mut new_dragon) = dragon.try_reproduce() {
-        new_dragon.eat(50);
-        println!("\r\nChild dragon: {:?}", new_dragon);
-        dragons_only(&mut new_dragon);
-        if let Some(mut new_new_dragon) = new_dragon.try_reproduce() {
-            new_new_dragon.eat(50);
-            dragons_only(&mut new_dragon);
-            println!("\r\nChild dragon: {:?}", new_dragon);
-            if let Some(mut new_new_new_dragon) = new_new_dragon.try_reproduce() {
-                new_new_dragon.eat(50);
-                dragons_only(&mut new_new_new_dragon);
-                println!("\r\nGrand grand child dragon: {:?}", new_new_new_dragon);
-                if let Some(mut new_new_new_new_dragon) = new_new_new_dragon.try_reproduce() {
-                    new_new_new_new_dragon.eat(50);
-                    dragons_only(&mut new_new_new_new_dragon);
-                    println!(
-                        "\r\nGrand grand grand child dragon: {:?}",
-                        new_new_new_new_dragon
-                    );
-                } else {
-                    println!("\r\nFail reproduce dragon {:?}", new_new_new_dragon);
-                }
-            } else {
-                println!("\r\nFail reproduce dragon {:?}", new_new_dragon);
-            }
-        } else {
-            println!("\r\nFail reproduce dragon {:?}", new_dragon);
-        }
-    } else {
-        println!("\r\nFail reproduce dragon {:?}", dragon);
-    }
-}
-
-fn dragons_only(dragon: &mut impl DragonTrait) {
-    dragon.fire();
 }

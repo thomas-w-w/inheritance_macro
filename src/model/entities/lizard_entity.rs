@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::model::components::{
     animal_component::AnimalComponent,
-    egglaying_animal_component::{EgglayingAnimalComponent, INIT_EGGS},
+    egglaying_animal_component::EgglayingAnimalComponent,
     food_component::FoodComponent,
     lizard_component::LizardComponent,
     obj_component::{ObjComponent, ObjType},
@@ -79,36 +79,4 @@ impl LizardTrait for LizardEntity {
     fn crawl(&self) {
         self.lizard.crawl()
     }
-}
-
-pub fn lizard_main() {
-    let mut lizard = LizardEntity::new(
-        LizardComponent {},
-        EgglayingAnimalComponent { eggs: INIT_EGGS },
-        AnimalComponent {
-            calories: 10,
-            given_name: format!("{} main", ObjType::Lizard),
-        },
-        ObjComponent {
-            obj_id: ObjComponent::new_id(),
-            parent_id: None,
-            obj_type: ObjType::Lizard,
-        },
-        Arc::new(Mutex::new(FoodComponent {
-            food_capacity: 1000000,
-        })),
-    );
-    lizard.crawl();
-    lizard.eat(50);
-    lizards_only(&lizard);
-    println!("\r\nLizard: {:?}", lizard);
-    if let Some(mut new_lizard) = lizard.try_reproduce() {
-        new_lizard.eat(50);
-        lizards_only(&new_lizard);
-        println!("\r\nChild lizard: {:?}", new_lizard);
-    }
-}
-
-fn lizards_only(lizard: &impl LizardTrait) {
-    lizard.crawl();
 }

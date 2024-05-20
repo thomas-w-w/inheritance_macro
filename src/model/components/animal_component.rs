@@ -12,17 +12,15 @@ impl AnimalComponent {
     pub(crate) fn eat(&mut self, shared_food: Arc<Mutex<FoodComponent>>, calories: u32) -> bool {
         let mut food = shared_food.lock().unwrap();
 
-        let mut food_capacity = food.food_capacity;
+        let food_capacity = food.food_capacity;
 
         if food_capacity >= calories {
             food.food_capacity -= calories;
 
-            food_capacity = food.food_capacity;
-
             self.calories += calories;
 
             println!(
-                "AnimalComponent::eat: {} ate {} calories. GLOBAL food_capacity: {:?}",
+                "AnimalComponent::eat: {} ate {} calories. GLOBAL food_capacity: {:?}\r\n",
                 self.given_name, calories, food.food_capacity
             );
 

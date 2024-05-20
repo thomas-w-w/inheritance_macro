@@ -3,9 +3,6 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub(crate) enum ObjType {
-    Obj,
-    Food,
-    Animal,
     Bird,
     Lizard,
     Dragon,
@@ -14,12 +11,9 @@ pub(crate) enum ObjType {
 impl Display for ObjType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ObjType::Obj => write!(f, "Obj"),
-            ObjType::Animal => write!(f, "Animal"),
             ObjType::Bird => write!(f, "Bird"),
             ObjType::Lizard => write!(f, "Lizard"),
             ObjType::Dragon => write!(f, "Dragon"),
-            ObjType::Food => write!(f, "Food"),
         }
     }
 }
