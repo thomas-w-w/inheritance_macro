@@ -4,9 +4,6 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-// use obj_fr_baseclass::{Animal, Bird, Dragon, Food, IDragon, Lizard, Obj, ObjType};
-
-// use crate::{obj_fr_baseclass, IAnimal, IBird, ILizard, IObj};
 use crate::model::{
     components::{
         animal_component::AnimalComponent,
