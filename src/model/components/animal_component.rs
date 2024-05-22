@@ -19,10 +19,10 @@ impl AnimalComponent {
 
             self.calories += calories;
 
-            println!(
-                "AnimalComponent::eat: {} ate {} calories. GLOBAL food_capacity: {:?}\r\n",
-                self.given_name, calories, food.food_capacity
-            );
+            // println!(
+            //     "AnimalComponent::eat: {} ate {} calories. GLOBAL food_capacity: {:?}\r\n",
+            //     self.given_name, calories, food.food_capacity
+            // );
 
             return true;
         }
