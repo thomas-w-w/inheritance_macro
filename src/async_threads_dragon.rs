@@ -91,42 +91,9 @@ fn create_dragon(
     dragon
 }
 
-fn collect_birds(
-    handles: Vec<JoinHandle<Result<Arc<Mutex<Bird>>, Error>>>,
-    collection: Arc<Mutex<Vec<Arc<Mutex<Bird>>>>>,
-) {
-    for handle in handles {
-        let join_result = handle.join();
-        match join_result {
-            Ok(result) => {
-                collection.lock().unwrap().push(result.unwrap());
-            }
-            Err(msg) => {
-                println!("Join outer: Err: {:?}\r\n", msg);
-            }
-        }
-    }
-}
-
-fn collect_lizards(
-    handles: Vec<JoinHandle<Result<Arc<Mutex<Lizard>>, Error>>>,
-    collection: Arc<Mutex<Vec<Arc<Mutex<Lizard>>>>>,
-) {
-    for handle in handles {
-        let join_result = handle.join();
-        match join_result {
-            Ok(result) => {
-                collection.lock().unwrap().push(result.unwrap());
-            }
-            Err(msg) => {
-                println!("Join outer: Err: {:?}\r\n", msg);
-            }
-        }
-    }
-}
-fn collect_dragons(
-    handles: Vec<JoinHandle<Result<Arc<Mutex<Dragon>>, Error>>>,
-    collection: Arc<Mutex<Vec<Arc<Mutex<Dragon>>>>>,
+fn collect<T>(
+    handles: Vec<JoinHandle<Result<Arc<Mutex<T>>, Error>>>,
+    collection: Arc<Mutex<Vec<Arc<Mutex<T>>>>>,
 ) {
     for handle in handles {
         let join_result = handle.join();
@@ -199,7 +166,7 @@ fn run_bird(
             }
         }
 
-        collect_birds(child_handles, collection);
+        collect::<Bird>(child_handles, collection);
 
         Ok(Arc::clone(&bird_mutex))
     });
@@ -266,7 +233,7 @@ fn run_lizard(
             }
         }
 
-        collect_lizards(child_handles, collection);
+        collect::<Lizard>(child_handles, collection);
 
         Ok(Arc::clone(&lizard_mutex))
     });
@@ -333,7 +300,7 @@ fn run_dragon(
             }
         }
 
-        collect_dragons(child_handles, collection);
+        collect::<Dragon>(child_handles, collection);
 
         Ok(Arc::clone(&dragon_mutex))
     });
@@ -341,16 +308,26 @@ fn run_dragon(
     handle
 }
 
+fn unwrap_vect<T>(collection: Arc<Mutex<Vec<Arc<Mutex<T>>>>>) -> Vec<Arc<Mutex<T>>> {
+    let mut collection_locked = collection.lock().unwrap();
+
+    let collection_copy: Vec<Arc<Mutex<T>>> = mem::take(&mut *collection_locked);
+
+    drop(collection_locked);
+
+    collection_copy
+}
+
 pub async fn main_dragon() {
     let food_component = FoodComponent {
         food_capacity: 4000,
     };
 
+    let food_resource: Arc<Mutex<FoodComponent>> = Arc::new(Mutex::new(food_component));
+
     let bird_collection: Arc<Mutex<Vec<Arc<Mutex<Bird>>>>> = Arc::new(Mutex::new(vec![]));
     let lizard_collection: Arc<Mutex<Vec<Arc<Mutex<Lizard>>>>> = Arc::new(Mutex::new(vec![]));
     let dragon_collection: Arc<Mutex<Vec<Arc<Mutex<Dragon>>>>> = Arc::new(Mutex::new(vec![]));
-
-    let food_resource: Arc<Mutex<FoodComponent>> = Arc::new(Mutex::new(food_component));
 
     let mut bird_handles: Vec<JoinHandle<Result<Arc<Mutex<Bird>>, Error>>> = vec![];
     let mut lizard_handles: Vec<JoinHandle<Result<Arc<Mutex<Lizard>>, Error>>> = vec![];
@@ -397,40 +374,25 @@ pub async fn main_dragon() {
         dragon_handles.push(handle);
     }
 
-    collect_birds(bird_handles, Arc::clone(&bird_collection));
-    collect_lizards(lizard_handles, Arc::clone(&lizard_collection));
-    collect_dragons(dragon_handles, Arc::clone(&dragon_collection));
+    collect::<Bird>(bird_handles, Arc::clone(&bird_collection));
+    collect::<Lizard>(lizard_handles, Arc::clone(&lizard_collection));
+    collect::<Dragon>(dragon_handles, Arc::clone(&dragon_collection));
 
-    //copy vect of lizards
-    let mut arc_birds_vec_locked = bird_collection.lock().unwrap();
+    let bird_collection_copy = unwrap_vect::<Bird>(Arc::clone(&bird_collection));
+    let lizard_collection_copy = unwrap_vect::<Lizard>(Arc::clone(&lizard_collection));
+    let dragon_collection_copy = unwrap_vect::<Dragon>(Arc::clone(&dragon_collection));
 
-    let arc_birds_vec_copy = mem::take(&mut *arc_birds_vec_locked);
-
-    drop(arc_birds_vec_locked);
-
-    for bird_mutex in arc_birds_vec_copy {
+    for bird_mutex in bird_collection_copy {
         let bird = bird_mutex.lock().unwrap();
         println!("\r\nSAVE: {}\r\n{:?}", bird.get_given_name(), *bird);
     }
 
-    let mut arc_lizards_vec_locked = lizard_collection.lock().unwrap();
-
-    let arc_lizards_vec_copy = mem::take(&mut *arc_lizards_vec_locked);
-
-    drop(arc_lizards_vec_locked);
-
-    for lizard_mutex in arc_lizards_vec_copy {
+    for lizard_mutex in lizard_collection_copy {
         let lizard = lizard_mutex.lock().unwrap();
         println!("\r\nSAVE: {}\r\n{:?}", lizard.get_given_name(), *lizard);
     }
 
-    let mut arc_dragons_vec_locked = dragon_collection.lock().unwrap();
-
-    let arc_dragons_vec_copy = mem::take(&mut *arc_dragons_vec_locked);
-
-    drop(arc_dragons_vec_locked);
-
-    for dragon_mutex in arc_dragons_vec_copy {
+    for dragon_mutex in dragon_collection_copy {
         let dragon = dragon_mutex.lock().unwrap();
         println!("\r\nSAVE: {}\r\n{:?}", dragon.get_given_name(), *dragon)
     }
