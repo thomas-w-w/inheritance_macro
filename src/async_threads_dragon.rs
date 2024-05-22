@@ -319,9 +319,7 @@ fn unwrap_vect<T>(collection: Arc<Mutex<Vec<Arc<Mutex<T>>>>>) -> Vec<Arc<Mutex<T
 }
 
 pub async fn main_dragon() {
-    let food_component = FoodComponent {
-        food_capacity: 4000,
-    };
+    let food_component = FoodComponent { food_capacity: 500 };
 
     let food_resource: Arc<Mutex<FoodComponent>> = Arc::new(Mutex::new(food_component));
 
