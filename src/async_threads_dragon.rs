@@ -142,7 +142,7 @@ fn run_bird(
                     child.set_given_name(new_given_name);
 
                     println!(
-                        "{tag}: {given_name} REPRODUCED: {}.\r\n",
+                        "{tag}: {given_name} REPRO#####--------#######---####DUCED: {}.\r\n",
                         child.get_given_name()
                     );
 
@@ -318,8 +318,16 @@ fn unwrap_vect<T>(collection: Arc<Mutex<Vec<Arc<Mutex<T>>>>>) -> Vec<Arc<Mutex<T
     collection_copy
 }
 
+pub(crate) const MAIN_FOOD_CAPACITY: u32 = 1000;//500
+pub(crate) const MAIN_FOOD_RESERVE: u32 = 1000;//500
+pub(crate) const MAIN_FIRE_CAPACITY: u32 = 100;
+pub(crate) const MAIN_NO_BIRDS: u32 = 4;//2
+pub(crate) const MAIN_NO_LIZARDS: u32 = 0;//2
+pub(crate) const MAIN_NO_DRAGONS: u32 = 0;//2
+
+
 pub async fn main_dragon() {
-    let food_component = FoodComponent { food_capacity: 500 };
+    let food_component = FoodComponent { food_capacity: MAIN_FOOD_CAPACITY };
 
     let food_resource: Arc<Mutex<FoodComponent>> = Arc::new(Mutex::new(food_component));
 
@@ -331,9 +339,9 @@ pub async fn main_dragon() {
     let mut lizard_handles: Vec<JoinHandle<Result<Arc<Mutex<Lizard>>, Error>>> = vec![];
     let mut dragon_handles: Vec<JoinHandle<Result<Arc<Mutex<Dragon>>, Error>>> = vec![];
 
-    let food_reserve: u32 = 100;
+    let food_reserve: u32 = MAIN_FOOD_RESERVE;
 
-    for index in 1..2 {
+    for index in 1..MAIN_NO_BIRDS {
         let bird: Arc<Mutex<Bird>> = Arc::new(Mutex::new(create_bird(
             index,
             food_reserve,
@@ -345,7 +353,7 @@ pub async fn main_dragon() {
         bird_handles.push(handle);
     }
 
-    for index in 1..2 {
+    for index in 1..MAIN_NO_LIZARDS {
         let lizard: Arc<Mutex<Lizard>> = Arc::new(Mutex::new(create_lizard(
             index,
             food_reserve,
@@ -357,9 +365,9 @@ pub async fn main_dragon() {
         lizard_handles.push(handle);
     }
 
-    let fire_capacity: u32 = 100;
+    let fire_capacity: u32 = MAIN_FIRE_CAPACITY;
 
-    for index in 1..2 {
+    for index in 1..MAIN_NO_DRAGONS {
         let dragon: Arc<Mutex<Dragon>> = Arc::new(Mutex::new(create_dragon(
             index,
             food_reserve,
